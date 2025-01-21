@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 const ChatSchema = new mongoose.Schema({
   chatId: { type: String, unique: true, required: true }, 
   name: { type: String, required: true }, // chat name
-  type: { type: String, required: true }, // type of chat (public или private)
+  type: { type: String, required: true }, // type of chat (public or private)
   inviteLink: { type: String, required: true }, 
   jetton: {
     jettonAddress: { type: String }, 
