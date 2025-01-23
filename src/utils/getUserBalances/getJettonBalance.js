@@ -1,8 +1,8 @@
 import axios from "axios";
 
-const API_URL = `https://tonapi.io/v2/accounts/${walletAddress}/jettons/${jettonAddress}`;
-
 async function getJettonBalance(walletAddress, jettonAddress, decimals) {
+    const API_URL = `https://tonapi.io/v2/accounts/${walletAddress}/jettons/${jettonAddress}`;
+ 
     try {
       const response = await axios.get(API_URL);
   
