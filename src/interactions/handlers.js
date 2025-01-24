@@ -9,6 +9,7 @@ import { getAllNamesCollection } from "../db/nftMethods.js";
 import { getShortAddress } from "../utils/getShortAddress.js";
 import { getTokensListingPrice } from "../db/adminMethods.js";
 import { getSimpleCoinPrice } from "../utils/getSCPrice.js";
+import { loadAdminData } from "../utils/config.js";
 
 export async function handleProfile(bot, chatId, messageId) {
     try {
@@ -271,6 +272,9 @@ export async function handleCollectionsList(bot, chatId, messageId) {
 
 export async function handleTokensListing(bot, chatId, messageId) {
     try {
+        const adminData = await loadAdminData();
+        const listingManager = adminData.listingManager;
+
         const { jettonListingPrice, nftListingPrice } = await getTokensListingPrice();
         const priceSimpleCoin = await getSimpleCoinPrice();
 
@@ -280,7 +284,7 @@ export async function handleTokensListing(bot, chatId, messageId) {
         const roundedJettonPriceInSC = Math.ceil(jettonPriceInSC / 100) * 100;
         const roundedNftPriceInSC = Math.ceil(nftPriceInSc / 100) * 100;
 
-        const keyboard = await generateTokenListingKeyboard();
+        const keyboard = await generateTokenListingKeyboard(listingManager);
 
         return bot.editMessageText('В Данном разделе предоставлены цены на Листинги Токенов. Ниже вы можете оставить Заявку: \n\n' +
             `Листинг Жетона: <b>${jettonListingPrice}</b> 💲 ~ <code>$SC ${roundedJettonPriceInSC}</code>\n` +

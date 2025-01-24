@@ -106,12 +106,11 @@ export function generateNFTListKeyboard(names) {
     };
 }
 
-export async function generateTokenListingKeyboard() {
+export async function generateTokenListingKeyboard(listingManager) {
     return {
         inline_keyboard: [
             [
-                { text: 'Jetton Заявка', callback_data: 'None' },
-                { text: 'NFT Заявка', callback_data: 'None' },
+                { text: 'Отправить Заявку', url: listingManager },
             ],
             [
                 { text: '🟨 DeDust', url: 'https://dedust.io/swap/TON/EQB9QBqniFI0jOmw3PU6v1v4LU3Sivm9yPXDDB9Qf7cXTDft' },

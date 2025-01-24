@@ -11,10 +11,12 @@ import {
     setJettonListingPrice, 
     setCollectionListingPrice, 
     addAdmin, 
+    removeAdmin,
     getAdmins, 
     setCoreChannel, 
     setCoreChat,
-    getCoreMedia
+    getCoreMedia,
+    setListingManager
 } from "../db/adminMethods.js";
 import { Address } from "@ton/core";
 import { loadAdminData } from "../utils/config.js";
@@ -585,7 +587,7 @@ function addNewAdminCommand(bot) {
                 const setNewAdmin = await addAdmin(newAdminId);
 
                 if (setNewAdmin) {
-                    await bot.sendMessage(chatId, `Добавлен новый Админ ${newAdminId}.`, {
+                    await bot.sendMessage(chatId, `✅ Добавлен новый Админ ID ${newAdminId}.`, {
                         parse_mode: 'HTML',
                         reply_markup: {
                             inline_keyboard: [
@@ -613,6 +615,70 @@ function addNewAdminCommand(bot) {
         });
     });
 };
+
+function removeAdminCommand(bot) {
+    bot.onText(/\/remove_admin/, async (msg) => {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+
+        if (!admins.includes(userId)) {
+            return bot.sendMessage(chatId, 'У вас нет прав.');
+        }
+
+        await bot.sendMessage(chatId, 'Пожалуйста, введите ID администратора для удаления.\nВведите /cancel, чтобы отменить.');
+
+        const listener = bot.on('message', async (response) => {
+            if (response.text === '/cancel') {
+                bot.removeListener('message', listener);
+                return bot.sendMessage(chatId, '❌ Ввод отменен.');
+            }
+
+            try {
+                const adminIdToRemove = response.text.trim();
+                if (!adminIdToRemove || isNaN(Number(adminIdToRemove))) throw new Error('Некорректное значение айди.');
+
+                const removedAdmin = await removeAdmin(adminIdToRemove);
+
+                if (removedAdmin) {
+                    await bot.sendMessage(chatId, `✅ Админ ID ${adminIdToRemove} успешно удален.`, {
+                        parse_mode: 'HTML',
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: '« Назад', callback_data: 'Menu' }
+                                ]
+                            ]
+                        }
+                    });
+                } else {
+                    await bot.sendMessage(chatId, `❌ Администратор с ID ${adminIdToRemove} не найден.`, {
+                        parse_mode: 'HTML',
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: '« Назад', callback_data: 'Menu' }
+                                ]
+                            ]
+                        }
+                    });
+                }
+                bot.removeListener('message', listener);
+            } catch (error) {
+                console.error('Ошибка при удалении администратора:', error);
+                await bot.sendMessage(chatId, '❌ Произошла ошибка при удалении администратора.', {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: '« Назад', callback_data: 'Menu' }
+                            ]
+                        ]
+                    }
+                });
+                bot.removeListener('message', listener);
+            }
+        });
+    });
+}
 
 function getAdminsCommand(bot) {
     bot.onText(/\/get_admins/, async (msg) => {
@@ -703,6 +769,7 @@ function getCoreMediaCommand(bot) {
         }
     });
 }
+
 function setCoreChannelCommand(bot) {
     bot.onText(/\/set_core_channel/, async (msg) => {
         const chatId = msg.chat.id;
@@ -815,6 +882,59 @@ function setCoreChatCommand(bot) {
     });
 }
 
+function setListinManagerCommand(bot) {
+    bot.onText(/\/set_listing_manager/, async (msg) => {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+
+        if (!admins.includes(userId)) {
+            return bot.sendMessage(chatId, 'У вас нет прав.');
+        }
+
+        await bot.sendMessage(chatId, 'Пожалуйста, введите ID нового листинг менеджера.\nВведите /cancel, чтобы отменить.');
+
+        const listener = bot.on('message', async (response) => {
+            if (response.text === '/cancel') {
+                bot.removeListener('message', listener);
+                return bot.sendMessage(chatId, '❌ Ввод отменен.');
+            }
+
+            try {
+                const newLisitngManager = response.text.trim();
+
+                const setNewListingManager = await setListingManager(newLisitngManager);
+
+                if (setNewListingManager) {
+                    await bot.sendMessage(chatId, `✅ Установлен новый Листинг Менеджер.`, {
+                        parse_mode: 'HTML',
+                        reply_markup: {
+                            inline_keyboard: [
+                                [
+                                    { text: '« Назад', callback_data: 'Menu' }
+                                ]
+                            ]
+                        }
+                    });
+                } 
+                bot.removeListener('message', listener);
+            } catch (error) {
+                console.error('Ошибка при установлении менеджера:', error);
+                await bot.sendMessage(chatId, '❌ Произошла ошибка при установлени менеджера.', {
+                    reply_markup: {
+                        inline_keyboard: [
+                            [
+                                { text: '« Назад', callback_data: 'Menu' }
+                            ]
+                        ]
+                    }
+                });
+                bot.removeListener('message', listener);
+            }
+        });
+    });
+};
+
+
 export async function registerCommands(bot) {
     startCommand(bot);
     addJettonCommand(bot);
@@ -824,8 +944,10 @@ export async function registerCommands(bot) {
     setJettonListingPriceCommand(bot);
     setNFTListingPriceCommand(bot);
     addNewAdminCommand(bot);
+    removeAdminCommand(bot);
     getAdminsCommand(bot);
     getCoreMediaCommand(bot);
     setCoreChannelCommand(bot);
     setCoreChatCommand(bot);
+    setListinManagerCommand(bot);
 }

@@ -84,6 +84,30 @@ export async function addAdmin(adminId) {
     }
 }
 
+export async function removeAdmin(adminId) {
+    try {
+        let admin = await Admin.findOne({});
+        if (!admin) {
+            console.log('Запись Admin не найдена.');
+            return null;
+        }
+
+        const adminIndex = admin.adminsList.indexOf(Number(adminId));
+        if (adminIndex === -1) {
+            console.log(`Администратор с ID ${adminId} не найден.`);
+            return null;
+        }
+
+        admin.adminsList.splice(adminIndex, 1);
+        await admin.save();
+        console.log(`Администратор с ID ${adminId} успешно удален.`);
+        return admin;
+    } catch (error) {
+        console.error('Ошибка при удалении администратора:', error);
+        throw error;
+    }
+}
+
 export async function getAdmins() {
     try {
         const admin = await Admin.findOne({});
@@ -181,6 +205,45 @@ export async function getTokensListingPrice() {
         };
     } catch (error) {
         console.error('Ошибка при получении администратора:', error);
+        throw error;
+    }
+}
+
+export async function setListingManager(userLink) {
+    try {
+        let admin = await Admin.findOne({ });
+
+        if (!admin) {
+            admin = new Admin(); 
+            await admin.save(); 
+            console.log('Создана новая запись Admin.');
+        }
+
+        admin.listingManager = userLink;
+
+        await admin.save();
+        console.log(`Менеджер обновлен.`);
+        return admin;
+    } catch (error) {
+        console.error('Ошибка при обновлении:', error);
+        throw error;
+    }
+}
+
+export async function getListingManager() {
+    try {
+        const admin = await Admin.findOne({});
+
+        if (!admin) {
+            console.log('Запись Admin не найдена.');
+            return '';
+        }
+
+        const listingManager = admin.listingManager; 
+
+        return listingManager;
+    } catch (error) {
+        console.error('Ошибка при получении листинг менеджера:', error);
         throw error;
     }
 }

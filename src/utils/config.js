@@ -13,6 +13,7 @@ export let coreMedia = {
     }
 };
 export let admins = [];
+export let listingManager = '';
 
 export async function loadAdminData() {
     try {
@@ -33,6 +34,7 @@ export async function loadAdminData() {
                 },
             };
             admins = adminData.adminsList;
+            listingManager = adminData.listingManager;
 
             console.log('Админ данные успешно загружены.');
         } else {
@@ -44,6 +46,7 @@ export async function loadAdminData() {
             nftListingPrice,
             coreMedia,
             admins,
+            listingManager
         };
     } catch (error) {
         console.error('Ошибка при загрузке админ данных:', error);
@@ -53,5 +56,4 @@ export async function loadAdminData() {
 
 (async () => {
   await loadAdminData();
-
 })();
