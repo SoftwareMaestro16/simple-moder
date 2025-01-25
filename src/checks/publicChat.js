@@ -52,12 +52,13 @@ export async function handlePublicChats(bot) {
                             console.warn(`Не удалось удалить сообщение пользователя ${userId}: ${deleteError.message}`);
                         }
 
+                        const muteUntil = Math.floor(Date.now() / 1000) + 60;
                         await bot.restrictChatMember(chatId, userId, {
                             can_send_messages: false,
-                            until_date: Math.floor(Date.now() / 1000) + 60,
+                            until_date: muteUntil,
                         });
 
-                        console.log(`Пользователь ${userId} получил мьют в чате ${chatId} из-за несоответствия требованиям.`);
+                        console.log(`Muted user ${userId} in chat ${chatId} for 1 minute due to insufficient balance.`);
 
                         const requirementMessage = `
 ⚠️ Чтобы писать в этом чате, вам необходимо иметь на балансе: <b>${chat.jetton.jettonRequirement} $${chat.jetton.symbol}</b>
@@ -88,12 +89,12 @@ export async function handlePublicChats(bot) {
                         console.warn(`Не удалось удалить сообщение пользователя ${userId}: ${deleteError.message}`);
                     }
 
-                    await bot.restrictChatMember(chatId, userId, {
-                        can_send_messages: false,
-                        until_date: Math.floor(Date.now() / 1000) + 60,
+                    const muteUntil = Math.floor(Date.now() / 1000) + 60; 
+                    await bot.restrictChatMember(chatConfig.id, userId, {
+                      until_date: muteUntil,
                     });
 
-                    console.log(`Пользователь ${userId} получил мьют в чате ${chatId} из-за отсутствия кошелька.`);
+                    console.log(`Muted user ${userId} in chat ${chatId} for 1 minute due to missing wallet.`);
 
                     const noWalletMessage = `
 ⚠️ Чтобы писать в этом чате, вам необходимо подключить кошелек и иметь на балансе: <b>${chat.jetton.jettonRequirement} $${chat.jetton.symbol}</b>

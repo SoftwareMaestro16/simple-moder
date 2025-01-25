@@ -133,7 +133,7 @@ export async function handlePrivateNftChats(bot) {
             }
         
             console.log('Проверка всех чатов завершена.');
-        }, 25000);
+        }, 45000);
     } catch (error) {
         console.error('Ошибка в handlePrivateNftChats:', error.message);
     }

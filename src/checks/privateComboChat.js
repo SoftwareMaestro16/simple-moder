@@ -59,7 +59,7 @@ export async function handleComboChats(bot) {
                         { _id: chatDoc._id },
                         { $addToSet: { members: userId.toString() } }
                     );
-                    
+
                     await bot.sendMessage(
                         chatId,
                         `🎉 Добро пожаловать, ${joinRequest.from.first_name || 'новый участник'}, в наш приватный чат! 🎊`,
@@ -143,7 +143,7 @@ export async function handleComboChats(bot) {
             }
 
             console.log('Проверка всех чатов завершена.');
-        }, 25000);
+        }, 45000);
     } catch (error) {
         console.error('Ошибка в handleComboChats:', error.message);
     }
