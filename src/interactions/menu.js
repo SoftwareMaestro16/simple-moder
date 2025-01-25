@@ -1,5 +1,3 @@
-import { getAllJettonAddressesAndSymbols, getAllJettonSymbols } from "../db/jettonMethods.js";
-import { getAllCollectionsWithAddresses, getAllNamesCollection } from "../db/nftMethods.js";
 import { 
     handleWalletConnection, 
     handleProfile, 
@@ -10,7 +8,8 @@ import {
     handleTokensListing,
     handleCreateChat,
     handlePrivateChatSetup,
-    handlePublicChatSetup
+    handlePublicChatSetup,
+    handleUserChats
 } from "./handlers.js";
 import {
     handleSelectJetton,
@@ -24,11 +23,8 @@ import {
     handleJettonSelectPagination,
     handleNFTPagination,
     handleNFTSelectPagination,
+    handleUserChatsPagination,
 } from '../utils/chat/callbackCheckers.js';
-import { finalizeSetup } from "../utils/chat/chatSetupUtils.js";
-import { generateJettonListForSelectKeyboard, generateJettonListKeyboard, generateNFTListForSelectKeyboard, generateNFTListKeyboard } from "./keyboard.js";
-import { Address } from "@ton/core";
-import { addChatToDatabase } from '../db/chatMethods.js';
 
 export function registerCallbackQueries(bot) {
     
@@ -57,10 +53,14 @@ export function registerCallbackQueries(bot) {
                 return;
             }
 
+            if (callbackData.startsWith('chats_page_')) {
+                await handleUserChatsPagination(bot, callbackData, chatId, messageId);
+                return;
+            }
+
             console.log('Unhandled callback_query:', callbackData);
         } catch (error) {
             console.error('Ошибка обработки callback_query:', error.message);
-            await bot.sendMessage(chatId, '❌ Произошла ошибка при обработке запроса.');
         }
 
         try {
@@ -79,7 +79,6 @@ export function registerCallbackQueries(bot) {
             }
         } catch (error) {
             console.error('Ошибка обработки callback_query:', error.message);
-            await bot.sendMessage(chatId, '❌ Произошла ошибка при обработке запроса.');
         }
 
         if (['Tonkeeper', 'MyTonWallet', 'TonHub'].includes(callbackData)) {
@@ -111,6 +110,9 @@ export function registerCallbackQueries(bot) {
         }
         else if (callbackData === 'PublicChat') {
             await handlePublicChatSetup(bot, chatId, messageId);
+        }
+        else if (callbackData === 'MyChats') {
+            await handleUserChats(bot, chatId, messageId);
         }
 
         

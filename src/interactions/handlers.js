@@ -7,7 +7,8 @@ import {
     generteCreateChatKeyboard,
     generteReturnMainKeyboard,
     generateChoosePrivateChatCategoryKeyboard,
-    generateJettonListForSelectKeyboard
+    generateJettonListForSelectKeyboard,
+    generateUserChatsKeyboard
 } from "./keyboard.js";
 import { getWalletInfo } from "../tonConnect/wallets.js";
 import { getConnector } from "../tonConnect/connector.js";
@@ -20,7 +21,7 @@ import { getShortAddress } from "../utils/getShortAddress.js";
 import { getTokensListingPrice } from "../db/adminMethods.js";
 import { getSimpleCoinPrice } from "../utils/getSCPrice.js";
 import { loadAdminData } from "../utils/config.js";
-import { isDuplicateChat } from "../db/chatMethods.js";
+import { getUserChats, isDuplicateChat } from "../db/chatMethods.js";
 
 export async function handleProfile(bot, chatId, messageId) {
     try {
@@ -499,6 +500,41 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
         });
     } catch (error) {
         console.error('Ошибка в handlePublicChatSetup:', error);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
+    }
+}
+
+export async function handleUserChats(bot, chatId, messageId) {
+    try {
+        const userChats = await getUserChats(chatId);
+
+        if (!userChats.length) {
+            await bot.editMessageText(
+                '❌ У вас пока нет созданных чатов.',
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '« Назад', callback_data: 'Menu' }]],
+                    },
+                }
+            );
+            return;
+        }
+
+        const keyboard = generateUserChatsKeyboard(userChats);
+
+        await bot.editMessageText(
+            `📋 <b>Ваши чаты:</b>\n\nВыберите один из чатов ниже:`,
+            {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: 'HTML',
+                reply_markup: keyboard,
+            }
+        );
+    } catch (error) {
+        console.error('Ошибка в handleUserChats:', error.message);
         await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }

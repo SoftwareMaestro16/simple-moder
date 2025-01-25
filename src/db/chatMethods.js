@@ -125,3 +125,14 @@ export async function isDuplicateChat(chatIdInput) {
         throw new Error('Не удалось проверить чат на дубликат.');
     }
 }
+
+
+export async function getUserChats(userId) {
+    try {
+        const userChats = await Chat.find({ adminId: userId });
+        return userChats;
+    } catch (error) {
+        console.error('Ошибка при получении чатов пользователя:', error.message);
+        throw new Error('Не удалось получить чаты пользователя.');
+    }
+}

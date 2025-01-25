@@ -173,7 +173,7 @@ export function generateJettonListForSelectKeyboard(jettons, currentPage = 1) {
 }
 
 export function generateNFTListKeyboard(names, currentPage = 1) {
-    const itemsPerPage = 3; 
+    const itemsPerPage = 5; 
     const totalPages = Math.ceil(names.length / itemsPerPage); 
     const offset = (currentPage - 1) * itemsPerPage; 
     const currentNames = names.slice(offset, offset + itemsPerPage); 
@@ -214,7 +214,7 @@ export function generateNFTListKeyboard(names, currentPage = 1) {
 }
 
 export function generateNFTListForSelectKeyboard(collections, currentPage = 1) {
-    const itemsPerPage = 3; 
+    const itemsPerPage = 5; 
     const totalPages = Math.ceil(collections.length / itemsPerPage); 
     const offset = (currentPage - 1) * itemsPerPage; 
     const currentCollections = collections.slice(offset, offset + itemsPerPage); 
@@ -287,3 +287,43 @@ export function generateChoosePrivateChatCategoryKeyboard() {
     };
 }
 
+export function generateUserChatsKeyboard(chats, currentPage = 1) {
+    const itemsPerPage = 5; 
+    const totalPages = Math.ceil(chats.length / itemsPerPage); 
+    const offset = (currentPage - 1) * itemsPerPage; 
+    const currentChats = chats.slice(offset, offset + itemsPerPage); 
+
+    const keyboard = [];
+    const rowSize = 1;
+
+    for (let i = 0; i < currentChats.length; i += rowSize) {
+        const row = currentChats.slice(i, i + rowSize).map(chat => ({
+            text: chat.name,
+            url: chat.inviteLink,
+        }));
+        keyboard.push(row);
+    }
+
+    const navigationRow = [];
+    if (currentPage > 1) {
+        navigationRow.push({ text: '⬅️', callback_data: `chats_page_${currentPage - 1}` });
+    } else {
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
+    }
+
+    navigationRow.push({ text: `· ${currentPage} / ${totalPages} ·`, callback_data: 'noop' });
+
+    if (currentPage < totalPages) {
+        navigationRow.push({ text: '➡️', callback_data: `chats_page_${currentPage + 1}` });
+    } else {
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
+    }
+
+    keyboard.push(navigationRow);
+
+    keyboard.push([{ text: '« Назад', callback_data: 'Menu' }]);
+
+    return {
+        inline_keyboard: keyboard,
+    };
+}
