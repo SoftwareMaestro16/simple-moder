@@ -15,7 +15,7 @@ export async function handlePublicChats(bot) {
         console.log(`Обнаружено публичных чатов: ${publicChats.length}`);
 
         bot.on('message', async (msg) => {
-            if (!msg.text || msg.chat.type === 'private') {
+            if (msg.chat.type === 'private') {
                 return; 
             }
 
