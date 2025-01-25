@@ -55,10 +55,17 @@ export async function handleComboChats(bot) {
                     console.log(`Пользователь ${userId} соответствует требованиям. Одобряем запрос.`);
                     await bot.approveChatJoinRequest(chatId, userId);
 
-                    await Chat.updateOne(
-                        { _id: chatDoc._id },
+                    // Добавляем пользователя в members
+                    const updateResult = await Chat.updateOne(
+                        { chatId: chatId.toString() },
                         { $addToSet: { members: userId.toString() } }
                     );
+
+                    if (updateResult.modifiedCount > 0) {
+                        console.log(`Пользователь ${userId} добавлен в members чата ${chatId}.`);
+                    } else {
+                        console.log(`Не удалось обновить members для чата ${chatId}.`);
+                    }
 
                     await bot.sendMessage(
                         chatId,
@@ -71,6 +78,28 @@ export async function handleComboChats(bot) {
             } catch (error) {
                 console.error(`Ошибка при проверке пользователя ${userId} для чата ${chatId}:`, error.message);
                 await bot.declineChatJoinRequest(chatId, userId);
+            }
+        });
+
+        bot.on('message', async (msg) => {
+            const chatId = msg.chat.id;
+            const userId = msg.from.id;
+
+            if (msg.left_chat_member) {
+                const leftUserId = msg.left_chat_member.id;
+                console.log(`Пользователь ${leftUserId} покинул чат ${chatId}.`);
+
+                // Удаляем пользователя из members
+                const updateResult = await Chat.updateOne(
+                    { chatId: chatId.toString() },
+                    { $pull: { members: leftUserId.toString() } }
+                );
+
+                if (updateResult.modifiedCount > 0) {
+                    console.log(`Пользователь ${leftUserId} удалён из members чата ${chatId}.`);
+                } else {
+                    console.log(`Пользователь ${leftUserId} не найден в members чата ${chatId}.`);
+                }
             }
         });
 
@@ -98,6 +127,8 @@ export async function handleComboChats(bot) {
                         if (!walletAddress) {
                             console.log(`У участника ${memberId} в чате ${chatId} нет кошелька. Удаляем.`);
                             await bot.banChatMember(chatId, memberId);
+                            await bot.unbanChatMember(chatId, memberId);
+
                             await Chat.updateOne(
                                 { _id: chat._id },
                                 { $pull: { members: memberId } }
