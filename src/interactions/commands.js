@@ -577,9 +577,9 @@ function addNewAdminCommand(bot) {
         const chatId = msg.chat.id;
         const userId = msg.from.id;
 
-        // if (!admins.includes(userId)) {
-        //     return bot.sendMessage(chatId, 'У вас нет прав.');
-        // }
+        if (!admins.includes(userId)) {
+            return bot.sendMessage(chatId, 'У вас нет прав.');
+        }
 
         await bot.sendMessage(chatId, 'Пожалуйста, введите ID нового админа.\nВведите /cancel, чтобы отменить.');
 
