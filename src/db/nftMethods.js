@@ -23,7 +23,7 @@ export async function addNFT(address, name) {
         console.error('Ошибка при добавлении Collection:', error);
         throw error;
     }
-}
+};
 
 export async function deleteNFT(address) {
     try {
