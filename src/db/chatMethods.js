@@ -1,6 +1,7 @@
 import Chat from '../models/Chat.js';
 import { getJettonData } from '../utils/getTokensData/getJettonData.js';
 import { getCollectionData } from '../utils/getTokensData/getCollectionData.js';
+import { generteReturnMainKeyboard } from '../interactions/keyboard.js';
 
 export async function addChatToDatabase(bot, callbackQuery) {
     try {
@@ -93,7 +94,11 @@ export async function addChatToDatabase(bot, callbackQuery) {
         });
 
         await newChat.save();
-        await bot.sendMessage(chatId, '✅ Чат успешно добавлен в базу данных!');
+
+        const keyboard = await generteReturnMainKeyboard();
+        await bot.sendMessage(chatId, '✅ Чат успешно добавлен!', {
+            reply_markup: keyboard
+        });
     } catch (error) {
         console.error('Ошибка при добавлении чата в базу данных:', error.message);
 

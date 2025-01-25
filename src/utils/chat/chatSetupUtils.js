@@ -1,4 +1,5 @@
 import { addChatToDatabase } from "../../db/chatMethods.js";
+import { generteReturnMainKeyboard } from "../../interactions/keyboard.js";
 
 export async function finalizeSetup(bot, chatId) {
     const { chatInfo = {}, jetton = {}, nft = {}, typeOfChat = 'N/A' } = bot.context;
@@ -83,7 +84,11 @@ async function handleRejectSetup(bot, chatId) {
             bot.context.lastMessageId = null;
         }
         bot.context = {}; 
-        await bot.sendMessage(chatId, '❌ Настройка чата отменена.');
+
+        const keyboard = await generteReturnMainKeyboard();
+        await bot.sendMessage(chatId, '❌ Настройка чата отменена.', {
+            reply_markup: keyboard
+        });
     } catch (error) {
         console.error('Ошибка при отмене настройки:', error.message);
         await bot.sendMessage(chatId, '❌ Произошла ошибка при отмене настройки.');

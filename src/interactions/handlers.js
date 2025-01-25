@@ -379,6 +379,27 @@ export async function handlePrivateChatSetup(bot, chatId, messageId) {
                 return;
             }
 
+            // Проверяем тип чата
+            if (chatInfo.type !== 'group' && chatInfo.type !== 'supergroup') {
+                await bot.sendMessage(
+                    chatId,
+                    '❌ Нельзя добавить чат, который не является группой или супергруппой.'
+                );
+                return;
+            }
+
+            // Проверяем, является ли пользователь администратором
+            const chatAdmins = await bot.getChatAdministrators(chatIdInput).catch(() => []);
+            const isAdmin = chatAdmins.some((admin) => admin.user.id === message.from.id);
+
+            if (!isAdmin) {
+                await bot.sendMessage(
+                    chatId,
+                    '❌ Вы не являетесь администратором этого чата. Добавление невозможно.'
+                );
+                return;
+            }
+
             await bot.sendMessage(
                 chatId,
                 `✅ <b>Чат найден!</b>\n\n` +
@@ -436,7 +457,25 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
                 return;
             }
 
-            // Открываем выбор жетонов после подтверждения
+            if (chatInfo.type !== 'group' && chatInfo.type !== 'supergroup') {
+                await bot.sendMessage(
+                    chatId,
+                    '❌ Нельзя добавить чат, который не является группой или супергруппой.'
+                );
+                return;
+            }
+
+            const chatAdmins = await bot.getChatAdministrators(chatIdInput).catch(() => []);
+            const isAdmin = chatAdmins.some((admin) => admin.user.id === message.from.id);
+
+            if (!isAdmin) {
+                await bot.sendMessage(
+                    chatId,
+                    '❌ Вы не являетесь администратором этого чата. Добавление невозможно.'
+                );
+                return;
+            }
+
             const jettons = await getAllJettonAddressesAndSymbols();
 
             if (jettons.length === 0) {

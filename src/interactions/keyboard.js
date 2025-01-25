@@ -165,7 +165,7 @@ export function generateJettonListForSelectKeyboard(jettons, currentPage = 1) {
 
     keyboard.push(navigationRow);
 
-    keyboard.push([{ text: '« Назад', callback_data: 'Menu' }]);
+    keyboard.push([{ text: '📋 Меню', callback_data: 'Menu' }]);
 
     return {
         inline_keyboard: keyboard,
@@ -247,7 +247,7 @@ export function generateNFTListForSelectKeyboard(collections, currentPage = 1) {
 
     keyboard.push(navigationRow);
 
-    keyboard.push([{ text: '« Назад', callback_data: 'Menu' }]);
+    keyboard.push([{ text: '📋 Меню', callback_data: 'Menu' }]);
 
     return {
         inline_keyboard: keyboard,
