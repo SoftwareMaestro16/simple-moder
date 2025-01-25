@@ -1,3 +1,5 @@
+import { getAllJettonAddressesAndSymbols, getAllJettonSymbols } from "../db/jettonMethods.js";
+import { getAllCollectionsWithAddresses, getAllNamesCollection } from "../db/nftMethods.js";
 import { 
     handleWalletConnection, 
     handleProfile, 
@@ -6,13 +8,78 @@ import {
     handleJettonList,
     handleCollectionsList,
     handleTokensListing,
+    handleCreateChat,
+    handlePrivateChatSetup,
+    handlePublicChatSetup
 } from "./handlers.js";
+import {
+    handleSelectJetton,
+    handleSelectNFT,
+    handleSelectJettonNFT,
+    handleJettonSelection,
+    handleNFTSelection,
+} from '../utils/chat/callbackHelpers.js';
+import {
+    handleJettonPagination,
+    handleNFTPagination,
+} from '../utils/chat/callbackCheckers.js';
+import { finalizeSetup } from "../utils/chat/chatSetupUtils.js";
+import { generateJettonListForSelectKeyboard, generateJettonListKeyboard, generateNFTListForSelectKeyboard, generateNFTListKeyboard } from "./keyboard.js";
+import { Address } from "@ton/core";
+import { addChatToDatabase } from '../db/chatMethods.js';
 
 export function registerCallbackQueries(bot) {
+    
     bot.on('callback_query', async (callbackQuery) => {
         const chatId = callbackQuery.message.chat.id;
         const callbackData = callbackQuery.data;
         const messageId = callbackQuery.message.message_id;
+
+        try {
+            if (callbackData.startsWith('jtnsp_')) {
+                await handleJettonPagination(bot, callbackData, chatId, messageId);
+                return;
+            }
+
+            if (callbackData.startsWith('nftsp_')) {
+                await handleNFTPagination(bot, callbackData, chatId, messageId);
+                return;
+            }
+
+            if (callbackData.startsWith('nft_')) {
+                await handleNFTSelection(bot, chatId, messageId, callbackData);
+                return;
+            }
+
+            if (callbackData.startsWith('jetton_')) {
+                await handleJettonSelection(bot, chatId, messageId, callbackData);
+                return;
+            }
+
+            console.log('Unhandled callback_query:', callbackData);
+        } catch (error) {
+            console.error('Ошибка обработки callback_query:', error.message);
+            await bot.sendMessage(chatId, '❌ Произошла ошибка при обработке запроса.');
+        }
+
+        try {
+            if (callbackData === 'SelectJetton') {
+                await handleSelectJetton(bot, chatId, messageId);
+            } else if (callbackData === 'SelectNFT') {
+                await handleSelectNFT(bot, chatId, messageId);
+            } else if (callbackData === 'SelectJettonNFT') {
+                await handleSelectJettonNFT(bot, chatId, messageId);
+            } else if (callbackData.startsWith('jetton_')) {
+                await handleJettonSelection(bot, chatId, messageId, callbackData);
+            } else if (callbackData.startsWith('nft_')) {
+                await handleNFTSelection(bot, chatId, messageId, callbackData);
+            } else {
+                console.log('Unhandled callback_query:', callbackData);
+            }
+        } catch (error) {
+            console.error('Ошибка обработки callback_query:', error.message);
+            await bot.sendMessage(chatId, '❌ Произошла ошибка при обработке запроса.');
+        }
 
         if (['Tonkeeper', 'MyTonWallet', 'TonHub'].includes(callbackData)) {
             await handleWalletConnection(bot, chatId, callbackData, messageId);
@@ -35,5 +102,17 @@ export function registerCallbackQueries(bot) {
         else if (callbackData == 'TokenListing') {
             await handleTokensListing(bot, chatId, messageId);
         }
+        else if (callbackData == 'AddChat') {
+            await handleCreateChat(bot, chatId, messageId);
+        }
+        else if (callbackData === 'PrivateChat') {
+            await handlePrivateChatSetup(bot, chatId, messageId);
+        }
+        else if (callbackData === 'PublicChat') {
+            await handlePublicChatSetup(bot, chatId, messageId);
+        }
+
+        
     });
 }
+

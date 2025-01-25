@@ -1,5 +1,4 @@
 import Admin from "../models/Admin.js";
-import { jettonListingPrice, nftListingPrice } from "../utils/config.js";
 
 export async function getAdminStructure() {
     try {

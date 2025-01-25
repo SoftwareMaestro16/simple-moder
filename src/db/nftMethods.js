@@ -54,3 +54,16 @@ export async function getAllNamesCollection() {
         throw error;
     }
 }
+
+export async function getAllCollectionsWithAddresses() {
+    try {
+        const collections = await NFT.find({}, 'name address'); 
+        return collections.map(collection => ({
+            name: collection.name,
+            address: collection.address
+        }));
+    } catch (error) {
+        console.error('Ошибка при получении списка коллекций:', error);
+        throw error;
+    }
+}

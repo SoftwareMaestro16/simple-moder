@@ -54,3 +54,16 @@ export async function getAllJettonSymbols() {
         throw error;
     }
 }
+
+export async function getAllJettonAddressesAndSymbols() {
+    try {
+        const jettons = await Jetton.find({}, 'symbol address');
+        return jettons.map(jetton => ({
+            symbol: jetton.symbol,
+            address: jetton.address
+        }));
+    } catch (error) {
+        console.error('Ошибка при получении списка жетонов:', error);
+        throw error;
+    }
+}

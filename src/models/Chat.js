@@ -7,10 +7,12 @@ const ChatSchema = new mongoose.Schema({
   inviteLink: { type: String, required: true }, 
   jetton: {
     jettonAddress: { type: String }, 
+    symbol: { type: String },
     jettonRequirement: { type: Number }, 
   },
   nft: {
     collectionAddress: { type: String }, 
+    name: { type: String },
     nftRequirement: { type: Number }, 
   },
   comboCheck: { type: Boolean, default: false }, // flag combo check

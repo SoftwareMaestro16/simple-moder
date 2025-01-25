@@ -1,15 +1,26 @@
-import { generateMainKeyboard, generateProfileKeyboard, generateJettonListKeyboard, generateNFTListKeyboard, generateTokenListingKeyboard } from "./keyboard.js";
+import { 
+    generateMainKeyboard, 
+    generateProfileKeyboard,
+    generateJettonListKeyboard,
+    generateNFTListKeyboard,
+    generateTokenListingKeyboard, 
+    generteCreateChatKeyboard,
+    generteReturnMainKeyboard,
+    generateChoosePrivateChatCategoryKeyboard,
+    generateJettonListForSelectKeyboard
+} from "./keyboard.js";
 import { getWalletInfo } from "../tonConnect/wallets.js";
 import { getConnector } from "../tonConnect/connector.js";
 import { generateQRCode } from "../tonConnect/connector.js";
 import { toUserFriendlyAddress } from '@tonconnect/sdk';
 import { getUserByAddress, updateUserAddress, getUserById} from "../db/userMethods.js";
-import { getAllJettonSymbols } from "../db/jettonMethods.js";
+import { getAllJettonAddressesAndSymbols, getAllJettonSymbols } from "../db/jettonMethods.js";
 import { getAllNamesCollection } from "../db/nftMethods.js";
 import { getShortAddress } from "../utils/getShortAddress.js";
 import { getTokensListingPrice } from "../db/adminMethods.js";
 import { getSimpleCoinPrice } from "../utils/getSCPrice.js";
 import { loadAdminData } from "../utils/config.js";
+import { isDuplicateChat } from "../db/chatMethods.js";
 
 export async function handleProfile(bot, chatId, messageId) {
     try {
@@ -304,5 +315,151 @@ export async function handleTokensListing(bot, chatId, messageId) {
             chat_id: chatId,
             message_id: messageId
         });
+    }
+}
+
+export async function handleCreateChat(bot, chatId, messageId) {
+    try {
+        const keyboard = await generteCreateChatKeyboard();
+
+        return bot.editMessageText(`Выберите какой тип Чата вы хотите добавить:`,
+            {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: 'HTML',
+                reply_markup: keyboard
+            }
+        );
+
+    } catch (error) {
+        console.error('Ошибка при обработке:', error);
+        await bot.editMessageText('❌ Произошла ошибка при загрузке.', {
+            chat_id: chatId,
+            message_id: messageId
+        });
+    }
+}
+
+export async function handlePrivateChatSetup(bot, chatId, messageId) {
+    try {
+        await bot.editMessageText(
+            `📋 <b>Добавление приватного чата:</b>\n\n` +
+            `Введите <code>ID</code> чата, в который вы хотите добавить бота. Убедитесь, что бот добавлен в администраторы.`,
+            {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: 'HTML',
+                reply_markup: await generteReturnMainKeyboard(),
+            }
+        );
+
+        const typeOfChat = 'private';
+
+        bot.once('message', async (message) => {
+            const chatIdInput = message.text;
+
+            if (!/^-?\d+$/.test(chatIdInput)) {
+                await bot.sendMessage(chatId, '❌ Некорректный ID. Попробуйте еще раз.');
+                return;
+            }
+
+            const duplicateChat = await isDuplicateChat(chatIdInput);
+            if (duplicateChat) {
+                await bot.sendMessage(
+                    chatId,
+                    `❌ Чат с ID ${chatIdInput} уже существует в базе данных.\n\n`
+                );
+                return;
+            }
+
+            const chatInfo = await bot.getChat(chatIdInput).catch(() => null);
+
+            if (!chatInfo) {
+                await bot.sendMessage(chatId, '❌ Не удалось получить данные чата. Проверьте ID и права.');
+                return;
+            }
+
+            await bot.sendMessage(
+                chatId,
+                `✅ <b>Чат найден!</b>\n\n` +
+                `Теперь выберите категорию для настройки.`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: generateChoosePrivateChatCategoryKeyboard(),
+                }
+            );
+
+            bot.context = { chatIdInput, chatInfo, typeOfChat };
+        });
+    } catch (error) {
+        console.error('Ошибка в handlePrivateChatSetup:', error);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
+    }
+}
+
+export async function handlePublicChatSetup(bot, chatId, messageId) {
+    try {
+        await bot.editMessageText(
+            `📋 <b>Добавление публичного чата:</b>\n\n` +
+            `Введите <code>ID</code> чата, в который вы хотите добавить бота. Убедитесь, что бот добавлен в администраторы.`,
+            {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: 'HTML',
+                reply_markup: await generteReturnMainKeyboard(),
+            }
+        );
+
+        const typeOfChat = 'public';
+
+        bot.once('message', async (message) => {
+            const chatIdInput = message.text;
+
+            if (!/^-?\d+$/.test(chatIdInput)) {
+                await bot.sendMessage(chatId, '❌ Некорректный ID. Попробуйте еще раз.');
+                return;
+            }
+
+            const duplicateChat = await isDuplicateChat(chatIdInput);
+            if (duplicateChat) {
+                await bot.sendMessage(
+                    chatId,
+                    `❌ Чат с ID ${chatIdInput} уже существует в базе данных.\n\n`
+                );
+                return;
+            }
+
+            const chatInfo = await bot.getChat(chatIdInput).catch(() => null);
+
+            if (!chatInfo) {
+                await bot.sendMessage(chatId, '❌ Не удалось получить данные чата. Проверьте ID и права.');
+                return;
+            }
+
+            // Открываем выбор жетонов после подтверждения
+            const jettons = await getAllJettonAddressesAndSymbols();
+
+            if (jettons.length === 0) {
+                await bot.sendMessage(chatId, '❌ В базе данных нет доступных жетонов.');
+                return;
+            }
+
+            const keyboard = generateJettonListForSelectKeyboard(jettons);
+
+            await bot.sendMessage(
+                chatId,
+                `✅ <b>Чат найден!</b>\n\n` +
+                `Теперь выберите жетон для настройки доступа.`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: keyboard,
+                }
+            );
+
+            bot.context = { chatIdInput, chatInfo, typeOfChat };
+        });
+    } catch (error) {
+        console.error('Ошибка в handlePublicChatSetup:', error);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }
