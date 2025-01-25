@@ -15,6 +15,9 @@ export async function handlePublicChats(bot) {
         console.log(`Обнаружено публичных чатов: ${publicChats.length}`);
 
         bot.on('message', async (msg) => {
+            
+            const chatId = msg.chat.id;
+
             if (msg.chat.type === 'private') {
                 return; 
             }
@@ -23,8 +26,6 @@ export async function handlePublicChats(bot) {
                 console.log(`Присоединение новых участников в чат ${msg.chat.id}: ${msg.new_chat_members.map(m => m.id).join(', ')}`);
                 return;
             }
-
-            const chatId = msg.chat.id;
 
             if (msg.sender_chat) {
                 console.log(`Сообщение от привязанного канала (ID: ${msg.sender_chat.id}) пропущено.`);
