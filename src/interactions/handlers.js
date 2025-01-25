@@ -24,6 +24,8 @@ import { getShortAddress } from "../utils/getShortAddress.js";
 import { getTokensListingPrice } from "../db/adminMethods.js";
 import { getSimpleCoinPrice } from "../utils/getSCPrice.js";
 import { loadAdminData } from "../utils/config.js";
+import { handleUserChatsPagination } from "../utils/chat/callbackCheckers.js"
+import Chat from '../models/Chat.js';
 import { getChatRequirements, getPrivateChatsList, getUserChats, isDuplicateChat } from "../db/chatMethods.js";
 
 export async function handleProfile(bot, chatId, messageId) {
@@ -557,6 +559,81 @@ export async function handleUserChats(bot, chatId, messageId) {
     } catch (error) {
         console.error('Ошибка в handleUserChats:', error.message);
         await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
+    }
+}
+
+export async function handleUserChatInfo(bot, callbackData, chatId, messageId) {
+    try {
+        const parts = callbackData.split('_'); 
+        const chatIdFromCallback = parts[2];
+        const currentPage = parts[3];
+
+        const chat = await Chat.findOne({ chatId: chatIdFromCallback });
+
+        if (!chat) {
+            await bot.editMessageText('❌ Чат не найден.', {
+                chat_id: chatId,
+                message_id: messageId,
+            });
+            return;
+        }
+
+        const type = chat.type === 'private' ? 'Приватный' : 'Публичный';
+
+        let chatInfoText = `📋 <b>Информация о чате:</b>\n\n`;
+        chatInfoText += `<b>Тип:</b> ${type}\n\n`;
+
+        if (chat.jetton && chat.jetton.symbol && chat.jetton.jettonRequirement) {
+            chatInfoText += `🪙 Jetton: ${chat.jetton.jettonRequirement} $${chat.jetton.symbol}\n`;
+            chatInfoText += `- <a href="https://swap.coffee/dex?ft=TON&st=${chat.jetton.jettonAddress}">Купить ${chat.jetton.symbol}</a>\n\n`;
+        }
+
+        if (chat.nft && chat.nft.name && chat.nft.nftRequirement) {
+            chatInfoText += `🖼 NFT: ${chat.nft.nftRequirement}шт. ${chat.nft.name}\n`;
+            chatInfoText += `- <a href="https://getgems.io/collection/${chat.nft.collectionAddress}">Купить NFT</a>\n\n`;
+        }
+
+        if (chat.comboCheck) {
+            chatInfoText += '💫 Необходимо выполнить все требования.\n\n';
+        }
+
+        const keyboard = {
+            inline_keyboard: [
+                [{ text: '🎫 Перейти в Чат 🔑', url: chat.inviteLink }],
+                [{ text: '🗑️ Удалить Чат ❌', callback_data: `mychat_delete_${chatIdFromCallback}_${currentPage}` }],
+                [{ text: '« Назад', callback_data: `chats_page_${currentPage}` }],
+            ],
+        };
+
+        await bot.editMessageText(chatInfoText, {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: 'HTML',
+            reply_markup: keyboard,
+        });
+    } catch (error) {
+        console.error('Ошибка в handleUserChatInfo:', error.message);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
+    }
+}
+
+export async function handleUserChatDelete(bot, callbackData, chatId, messageId) {
+    try {
+        const parts = callbackData.split('_');
+        const chatIdFromCallback = parts[2];
+        const currentPage = parseInt(parts[3], 10);
+
+        await Chat.findOneAndDelete({ chatId: chatIdFromCallback });
+
+        await bot.editMessageText('✅ Чат удалён!', {
+            chat_id: chatId,
+            message_id: messageId,
+        });
+
+        await handleUserChatsPagination(bot, `chats_page_${currentPage}`, chatId, messageId);
+    } catch (error) {
+        console.error('Ошибка в handleUserChatDelete:', error.message);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка при удалении чата. Попробуйте позже.');
     }
 }
 

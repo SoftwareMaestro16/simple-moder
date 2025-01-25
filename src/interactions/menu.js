@@ -11,7 +11,9 @@ import {
     handlePublicChatSetup,
     handleUserChats,
     handlePrivateChatsList,
-    handleChatRequirements
+    handleChatRequirements,
+    handleUserChatDelete,
+    handleUserChatInfo
 } from "./handlers.js";
 import {
     handleSelectJetton,
@@ -30,7 +32,6 @@ import {
 } from '../utils/chat/callbackCheckers.js';
 
 export function registerCallbackQueries(bot) {
-    
     bot.on('callback_query', async (callbackQuery) => {
         const chatId = callbackQuery.message.chat.id;
         const callbackData = callbackQuery.data;
@@ -41,7 +42,7 @@ export function registerCallbackQueries(bot) {
                 await handleJettonPagination(bot, callbackData, chatId, messageId);
                 return;
             }
-        
+
             if (callbackData.startsWith('jtnsp_')) {
                 await handleJettonSelectPagination(bot, callbackData, chatId, messageId);
                 return;
@@ -51,6 +52,7 @@ export function registerCallbackQueries(bot) {
                 await handleNFTPagination(bot, callbackData, chatId, messageId);
                 return;
             }
+
             if (callbackData.startsWith('nftsp_')) {
                 await handleNFTSelectPagination(bot, callbackData, chatId, messageId);
                 return;
@@ -69,7 +71,17 @@ export function registerCallbackQueries(bot) {
             if (callbackData.startsWith('chat_requirements_')) {
                 await handleChatRequirements(bot, callbackData, chatId, messageId);
                 return;
-            }       
+            }
+
+            if (callbackData.startsWith('mychat_info_')) {
+                await handleUserChatInfo(bot, callbackData, chatId, messageId);
+                return;
+            }
+
+            if (callbackData.startsWith('mychat_delete_')) {
+                await handleUserChatDelete(bot, callbackData, chatId, messageId);
+                return;
+            }
 
             console.log('Unhandled callback_query:', callbackData);
         } catch (error) {
@@ -96,41 +108,29 @@ export function registerCallbackQueries(bot) {
 
         if (['Tonkeeper', 'MyTonWallet', 'TonHub'].includes(callbackData)) {
             await handleWalletConnection(bot, chatId, callbackData, messageId);
-        }
-        else if (callbackData == 'Profile') {
+        } else if (callbackData === 'Profile') {
             await handleProfile(bot, chatId, messageId);
-        }
-        else if (callbackData == 'Disconnect') {
+        } else if (callbackData === 'Disconnect') {
             await handleDisconnectWallet(bot, chatId, messageId);
-        }
-        else if (callbackData == 'Menu') {
+        } else if (callbackData === 'Menu') {
             await handleDefaultMenu(bot, chatId, messageId);
-        }
-        else if (callbackData == 'JettonList') {
+        } else if (callbackData === 'JettonList') {
             await handleJettonList(bot, chatId, messageId);
-        }
-        else if (callbackData == 'NFTList') {
+        } else if (callbackData === 'NFTList') {
             await handleCollectionsList(bot, chatId, messageId);
-        }
-        else if (callbackData == 'TokenListing') {
+        } else if (callbackData === 'TokenListing') {
             await handleTokensListing(bot, chatId, messageId);
-        }
-        else if (callbackData == 'AddChat') {
+        } else if (callbackData === 'AddChat') {
             await handleCreateChat(bot, chatId, messageId);
-        }
-        else if (callbackData === 'PrivateChat') {
+        } else if (callbackData === 'PrivateChat') {
             await handlePrivateChatSetup(bot, chatId, messageId);
-        }
-        else if (callbackData === 'PublicChat') {
+        } else if (callbackData === 'PublicChat') {
             await handlePublicChatSetup(bot, chatId, messageId);
-        }
-        else if (callbackData === 'MyChats') {
+        } else if (callbackData === 'MyChats') {
             await handleUserChats(bot, chatId, messageId);
-        }
-        else if (callbackData === 'EnterInChat') {
+        } else if (callbackData === 'EnterInChat') {
             await handlePrivateChatsList(bot, chatId, messageId);
         }
-        
     });
 }
 

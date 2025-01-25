@@ -1,8 +1,7 @@
 import { generateJettonListForSelectKeyboard, generateJettonListKeyboard, generateNFTListForSelectKeyboard, generateNFTListKeyboard, generatePrivateChatsKeyboard, generateUserChatsKeyboard } from "../../interactions/keyboard.js";
 import { getAllJettonAddressesAndSymbols, getAllJettonSymbols } from "../../db/jettonMethods.js";
 import { getAllCollectionsWithAddresses, getAllNamesCollection } from "../../db/nftMethods.js";
-import Chat from "../../models/Chat.js";
-import { getPrivateChatsList } from "../../db/chatMethods.js";
+import { getPrivateChatsList, getUserChats } from "../../db/chatMethods.js";
 
 export async function handleJettonPagination(bot, callbackData, chatId, messageId) {
     const parts = callbackData.split('_');
@@ -64,38 +63,28 @@ export async function handleUserChatsPagination(bot, callbackData, chatId, messa
     const parts = callbackData.split('_');
     const currentPage = parseInt(parts[2], 10);
 
-    try {
-        const userChats = await Chat.find({ adminId: chatId });
+    const userChats = await getUserChats(chatId);
 
-        if (!userChats.length) {
-            await bot.editMessageText(
-                '❌ У вас пока нет созданных чатов.',
-                {
-                    chat_id: chatId,
-                    message_id: messageId,
-                    reply_markup: {
-                        inline_keyboard: [[{ text: '« Назад', callback_data: 'Menu' }]],
-                    },
-                }
-            );
-            return;
-        }
-
-        const keyboard = generateUserChatsKeyboard(userChats, currentPage);
-
-        await bot.editMessageReplyMarkup(
-            {
-                inline_keyboard: keyboard.inline_keyboard,
-            },
-            {
-                chat_id: chatId,
-                message_id: messageId,
-            }
-        );
-    } catch (error) {
-        console.error('Ошибка в handleUserChatsPagination:', error);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
+    if (!userChats.length) {
+        await bot.editMessageText('❌ У вас пока нет созданных чатов.', {
+            chat_id: chatId,
+            message_id: messageId,
+            reply_markup: { inline_keyboard: [[{ text: '« Назад', callback_data: 'Menu' }]] },
+        });
+        return;
     }
+
+    const keyboard = generateUserChatsKeyboard(userChats, currentPage);
+
+    await bot.editMessageText(
+        `📋 <b>Ваши чаты:</b>\n\nВыберите один из чатов ниже.\n\n<b>Всего чатов:</b> ${userChats.length}`,
+        {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: 'HTML',
+            reply_markup: keyboard,
+        }
+    );
 }
 
 export async function handlePrivateChatsListPagination(bot, callbackData, chatId, messageId) {
