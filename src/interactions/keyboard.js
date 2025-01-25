@@ -91,15 +91,14 @@ export function generateSubscriptionKeyboard(coreMedia) {
 }
 
 export function generateJettonListKeyboard(symbols, currentPage = 1) {
-    const itemsPerPage = 12; // Максимум жетонов на странице
-    const totalPages = Math.ceil(symbols.length / itemsPerPage); // Всего страниц
-    const offset = (currentPage - 1) * itemsPerPage; // Считаем начальный индекс для текущей страницы
-    const currentSymbols = symbols.slice(offset, offset + itemsPerPage); // Берём только нужные жетоны для текущей страницы
+    const itemsPerPage = 9; 
+    const totalPages = Math.ceil(symbols.length / itemsPerPage); 
+    const offset = (currentPage - 1) * itemsPerPage; 
+    const currentSymbols = symbols.slice(offset, offset + itemsPerPage); 
 
     const keyboard = [];
     const rowSize = 3;
 
-    // Генерация строк жетонов для текущей страницы
     for (let i = 0; i < currentSymbols.length; i += rowSize) {
         const row = currentSymbols.slice(i, i + rowSize).map(symbol => ({
             text: symbol,
@@ -108,12 +107,11 @@ export function generateJettonListKeyboard(symbols, currentPage = 1) {
         keyboard.push(row);
     }
 
-    // Добавляем стрелки навигации внизу
     const navigationRow = [];
     if (currentPage > 1) {
         navigationRow.push({ text: '⬅️', callback_data: `jtn_page_${currentPage - 1}` });
     } else {
-        navigationRow.push({ text: '🔘', callback_data: 'noop' }); // Заглушка
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
     }
 
     navigationRow.push({ text: `· ${currentPage} / ${totalPages} ·`, callback_data: 'noop' });
@@ -121,12 +119,11 @@ export function generateJettonListKeyboard(symbols, currentPage = 1) {
     if (currentPage < totalPages) {
         navigationRow.push({ text: '➡️', callback_data: `jtn_page_${currentPage + 1}` });
     } else {
-        navigationRow.push({ text: '🔘', callback_data: 'noop' }); // Заглушка
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
     }
 
     keyboard.push(navigationRow);
 
-    // Добавляем кнопку "Назад"
     keyboard.push([{ text: '« Назад', callback_data: 'Menu' }]);
 
     return {
@@ -135,15 +132,14 @@ export function generateJettonListKeyboard(symbols, currentPage = 1) {
 }
 
 export function generateJettonListForSelectKeyboard(jettons, currentPage = 1) {
-    const itemsPerPage = 12; // Максимум жетонов на странице
-    const totalPages = Math.ceil(jettons.length / itemsPerPage); // Всего страниц
-    const offset = (currentPage - 1) * itemsPerPage; // Считаем начальный индекс для текущей страницы
-    const currentJettons = jettons.slice(offset, offset + itemsPerPage); // Берём только нужные жетоны для текущей страницы
+    const itemsPerPage = 9; 
+    const totalPages = Math.ceil(jettons.length / itemsPerPage); 
+    const offset = (currentPage - 1) * itemsPerPage;
+    const currentJettons = jettons.slice(offset, offset + itemsPerPage); 
 
     const keyboard = [];
     const rowSize = 3;
 
-    // Генерация строк жетонов для текущей страницы
     for (let i = 0; i < currentJettons.length; i += rowSize) {
         const row = currentJettons.slice(i, i + rowSize).map(jetton => ({
             text: jetton.symbol,
@@ -152,12 +148,11 @@ export function generateJettonListForSelectKeyboard(jettons, currentPage = 1) {
         keyboard.push(row);
     }
 
-    // Добавляем стрелки навигации внизу
     const navigationRow = [];
     if (currentPage > 1) {
         navigationRow.push({ text: '⬅️', callback_data: `jtnsp_${currentPage - 1}` });
     } else {
-        navigationRow.push({ text: '🔘', callback_data: 'noop' }); // Заглушка
+        navigationRow.push({ text: '🔘', callback_data: 'noop' });
     }
 
     navigationRow.push({ text: `· ${currentPage} / ${totalPages} ·`, callback_data: 'noop' });
@@ -165,12 +160,11 @@ export function generateJettonListForSelectKeyboard(jettons, currentPage = 1) {
     if (currentPage < totalPages) {
         navigationRow.push({ text: '➡️', callback_data: `jtnsp_${currentPage + 1}` });
     } else {
-        navigationRow.push({ text: '🔘', callback_data: 'noop' }); // Заглушка
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
     }
 
     keyboard.push(navigationRow);
 
-    // Добавляем кнопку "Назад"
     keyboard.push([{ text: '« Назад', callback_data: 'Menu' }]);
 
     return {
@@ -179,15 +173,14 @@ export function generateJettonListForSelectKeyboard(jettons, currentPage = 1) {
 }
 
 export function generateNFTListKeyboard(names, currentPage = 1) {
-    const itemsPerPage = 3; // Максимум коллекций на странице
-    const totalPages = Math.ceil(names.length / itemsPerPage); // Всего страниц
-    const offset = (currentPage - 1) * itemsPerPage; // Считаем начальный индекс для текущей страницы
-    const currentNames = names.slice(offset, offset + itemsPerPage); // Берём только нужные коллекции для текущей страницы
+    const itemsPerPage = 3; 
+    const totalPages = Math.ceil(names.length / itemsPerPage); 
+    const offset = (currentPage - 1) * itemsPerPage; 
+    const currentNames = names.slice(offset, offset + itemsPerPage); 
 
     const keyboard = [];
-    const rowSize = 3;
+    const rowSize = 1;
 
-    // Генерация строк NFT коллекций для текущей страницы
     for (let i = 0; i < currentNames.length; i += rowSize) {
         const row = currentNames.slice(i, i + rowSize).map(name => ({
             text: name,
@@ -196,12 +189,11 @@ export function generateNFTListKeyboard(names, currentPage = 1) {
         keyboard.push(row);
     }
 
-    // Добавляем стрелки навигации внизу
     const navigationRow = [];
     if (currentPage > 1) {
         navigationRow.push({ text: '⬅️', callback_data: `nft_page_${currentPage - 1}` });
     } else {
-        navigationRow.push({ text: '🔘', callback_data: 'noop' }); // Заглушка
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
     }
 
     navigationRow.push({ text: `· ${currentPage} / ${totalPages} ·`, callback_data: 'noop' });
@@ -209,12 +201,11 @@ export function generateNFTListKeyboard(names, currentPage = 1) {
     if (currentPage < totalPages) {
         navigationRow.push({ text: '➡️', callback_data: `nft_page_${currentPage + 1}` });
     } else {
-        navigationRow.push({ text: '🔘', callback_data: 'noop' }); // Заглушка
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
     }
 
     keyboard.push(navigationRow);
 
-    // Добавляем кнопку "Назад"
     keyboard.push([{ text: '« Назад', callback_data: 'Menu' }]);
 
     return {
@@ -223,15 +214,14 @@ export function generateNFTListKeyboard(names, currentPage = 1) {
 }
 
 export function generateNFTListForSelectKeyboard(collections, currentPage = 1) {
-    const itemsPerPage = 3; // Максимум коллекций на странице
-    const totalPages = Math.ceil(collections.length / itemsPerPage); // Всего страниц
-    const offset = (currentPage - 1) * itemsPerPage; // Считаем начальный индекс для текущей страницы
-    const currentCollections = collections.slice(offset, offset + itemsPerPage); // Берём только нужные коллекции для текущей страницы
+    const itemsPerPage = 3; 
+    const totalPages = Math.ceil(collections.length / itemsPerPage); 
+    const offset = (currentPage - 1) * itemsPerPage; 
+    const currentCollections = collections.slice(offset, offset + itemsPerPage); 
 
     const keyboard = [];
-    const rowSize = 3;
+    const rowSize = 1;
 
-    // Генерация строк коллекций для текущей страницы
     for (let i = 0; i < currentCollections.length; i += rowSize) {
         const row = currentCollections.slice(i, i + rowSize).map(collection => ({
             text: collection.name,
@@ -240,12 +230,11 @@ export function generateNFTListForSelectKeyboard(collections, currentPage = 1) {
         keyboard.push(row);
     }
 
-    // Добавляем стрелки навигации внизу
     const navigationRow = [];
     if (currentPage > 1) {
         navigationRow.push({ text: '⬅️', callback_data: `nftsp_${currentPage - 1}` });
     } else {
-        navigationRow.push({ text: '🔘', callback_data: 'noop' }); // Заглушка
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
     }
 
     navigationRow.push({ text: `· ${currentPage} / ${totalPages} ·`, callback_data: 'noop' });
@@ -253,12 +242,11 @@ export function generateNFTListForSelectKeyboard(collections, currentPage = 1) {
     if (currentPage < totalPages) {
         navigationRow.push({ text: '➡️', callback_data: `nftsp_${currentPage + 1}` });
     } else {
-        navigationRow.push({ text: '🔘', callback_data: 'noop' }); // Заглушка
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
     }
 
     keyboard.push(navigationRow);
 
-    // Добавляем кнопку "Назад"
     keyboard.push([{ text: '« Назад', callback_data: 'Menu' }]);
 
     return {

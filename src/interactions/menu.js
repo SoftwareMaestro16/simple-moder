@@ -21,7 +21,9 @@ import {
 } from '../utils/chat/callbackHelpers.js';
 import {
     handleJettonPagination,
+    handleJettonSelectPagination,
     handleNFTPagination,
+    handleNFTSelectPagination,
 } from '../utils/chat/callbackCheckers.js';
 import { finalizeSetup } from "../utils/chat/chatSetupUtils.js";
 import { generateJettonListForSelectKeyboard, generateJettonListKeyboard, generateNFTListForSelectKeyboard, generateNFTListKeyboard } from "./keyboard.js";
@@ -36,23 +38,22 @@ export function registerCallbackQueries(bot) {
         const messageId = callbackQuery.message.message_id;
 
         try {
-            if (callbackData.startsWith('jtnsp_')) {
+            if (callbackData.startsWith('jtn_page_')) {
                 await handleJettonPagination(bot, callbackData, chatId, messageId);
                 return;
             }
+        
+            if (callbackData.startsWith('jtnsp_')) {
+                await handleJettonSelectPagination(bot, callbackData, chatId, messageId);
+                return;
+            }
 
-            if (callbackData.startsWith('nftsp_')) {
+            if (callbackData.startsWith('nft_page_')) {
                 await handleNFTPagination(bot, callbackData, chatId, messageId);
                 return;
             }
-
-            if (callbackData.startsWith('nft_')) {
-                await handleNFTSelection(bot, chatId, messageId, callbackData);
-                return;
-            }
-
-            if (callbackData.startsWith('jetton_')) {
-                await handleJettonSelection(bot, chatId, messageId, callbackData);
+            if (callbackData.startsWith('nftsp_')) {
+                await handleNFTSelectPagination(bot, callbackData, chatId, messageId);
                 return;
             }
 

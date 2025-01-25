@@ -48,6 +48,15 @@ export async function addChatToDatabase(bot, callbackQuery) {
             }
         }
 
+        if (nft?.address) {
+            try {
+                const collectionData = await getCollectionData(nft.address);
+                nftName = collectionData?.name || nftName;
+            } catch (error) {
+                console.error('Ошибка получения данных коллекции:', error.message);
+            }
+        }
+
         if (isCombo) {
             if (jetton?.address) {
                 const jettonData = await getJettonData(jetton.address);

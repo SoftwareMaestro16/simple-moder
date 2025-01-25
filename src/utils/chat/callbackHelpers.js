@@ -41,11 +41,9 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
         return;
     }
 
-    // 1. Получаем адрес жетона
     const jettonAddress = Address.parse(callbackData.replace('jetton_', '')).toRawString();
     bot.context.jetton = { address: jettonAddress };
 
-    // 2. Спрашиваем у пользователя, сколько жетонов нужно
     let newMessage;
     try {
         newMessage = await bot.editMessageText(
@@ -61,10 +59,9 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
         if (error.response?.error_code === 400) {
             await bot.sendMessage(chatId, '❌ Произошла ошибка: чат не найден.');
         }
-        return; // Выходим, чтобы не обращаться к newMessage дальше
+        return; 
     }
 
-    // 3. Ждём одно сообщение от пользователя
     bot.once('message', async (message) => {
         const amount = parseFloat(message.text);
         if (isNaN(amount)) {
@@ -75,10 +72,8 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
             return;
         }
 
-        // Сохраняем нужное количество в контекст
         bot.context.jetton.amount = amount;
 
-        // Если ожидается NFT (например, выбрали SelectJettonNFT), то просим выбрать коллекцию
         if (bot.context.expectNFT) {
             const collections = await getAllCollectionsWithAddresses();
             const nftMessage = await bot.sendMessage(
@@ -90,7 +85,6 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
             );
             bot.context.lastMessageId = nftMessage.message_id;
         } else {
-            // Иначе завершаем настройку
             await finalizeSetup(bot, chatId);
         }
     });
