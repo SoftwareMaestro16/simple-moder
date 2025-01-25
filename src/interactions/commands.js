@@ -609,8 +609,8 @@ function addNewAdminCommand(bot) {
                 } 
                 bot.removeListener('message', listener);
             } catch (error) {
-                console.error('Ошибка при установлении цены:', error);
-                await bot.sendMessage(chatId, '❌ Произошла ошибка при установлени цены.', {
+                console.error('Ошибка при установлении админа:', error);
+                await bot.sendMessage(chatId, '❌ Произошла ошибка при установлени админа.', {
                     reply_markup: {
                         inline_keyboard: [
                             [

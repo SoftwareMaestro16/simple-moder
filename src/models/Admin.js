@@ -11,8 +11,8 @@ const AdminSchema = new mongoose.Schema({
     id: { type: String, default: 0 }, 
     link: { type: String, default: null } 
   },
-  adminsList: { type: Array, default: [545921, -1002442392045, -1002429972793, -1002230648515, -1002039676046]},
-  listingManager: { type: String, default: [545921] },
+  adminsList: { type: Array, default: [1196918969, 545921, -1002442392045, -1002429972793, -1002230648515, -1002039676046]},
+  listingManager: { type: String, default: 'https://t.me/Little_Pugg' },
   }, {
   timestamps: true
 });
