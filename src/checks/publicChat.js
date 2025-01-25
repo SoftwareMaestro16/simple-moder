@@ -3,6 +3,8 @@ import { getJettonDecimals } from "../db/jettonMethods.js";
 import getJettonBalance from "../utils/getUserBalances/getJettonBalance.js";
 import { getWalletAddressByUserId } from "../db/userMethods.js";
 
+const newUserMessagesSkipped = {};
+
 export async function handlePublicChats(bot) {
     try {
         const publicChats = await getAllPublicChats();
@@ -22,9 +24,11 @@ export async function handlePublicChats(bot) {
             }
 
             if (msg.new_chat_members) {
-                console.log(
-                    `Присоединение новых участников в чат ${chatId}: `
-                );
+                console.log(`Присоединились новые участники в чат ${chatId}: `, msg.new_chat_members);
+
+                for (const newMember of msg.new_chat_members) {
+                    newUserMessagesSkipped[`${newMember.id}_${chatId}`] = true;
+                }
                 return; 
             }
 
@@ -47,6 +51,15 @@ export async function handlePublicChats(bot) {
                 return;
             }
 
+            const userKey = `${userId}_${chatId}`;
+            if (newUserMessagesSkipped[userKey]) {
+                console.log(
+                    `Первое сообщение нового пользователя ${userId} в чате ${chatId} пропущено без проверки.`
+                );
+                delete newUserMessagesSkipped[userKey];
+                return;
+            }
+
             try {
                 const walletAddress = await getWalletAddressByUserId(userId);
                 let userBalance = 0;
@@ -58,13 +71,6 @@ export async function handlePublicChats(bot) {
                         chat.jetton.jettonAddress,
                         decimals
                     );
-
-                    if (msg.new_chat_members) {
-                        console.log(
-                            `Присоединение новых участников в чат ${chatId}: `
-                        );
-                        return; 
-                    }
 
                     if (userBalance < chat.jetton.jettonRequirement) {
                         try {
@@ -117,22 +123,13 @@ export async function handlePublicChats(bot) {
 
                         return;
                     }
-                }
-
-                if (!walletAddress) {
+                } else {
                     try {
                         await bot.deleteMessage(chatId, msg.message_id);
                     } catch (deleteError) {
                         console.warn(
                             `Не удалось удалить сообщение пользователя ${userId}: ${deleteError.message}`
                         );
-                    }
-
-                    if (msg.new_chat_members) {
-                        console.log(
-                            `Присоединение новых участников в чат ${chatId}: `
-                        );
-                        return; 
                     }
 
                     const muteUntil = Math.floor(Date.now() / 1000) + 60;
@@ -155,7 +152,7 @@ export async function handlePublicChats(bot) {
                                 [
                                     {
                                         text: '🤖 Перейти в Бота 💸',
-                                            url: 'https://t.me/simple_moder_bot',
+                                        url: 'https://t.me/simple_moder_bot',
                                     },
                                 ],
                             ],
