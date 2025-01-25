@@ -70,3 +70,27 @@ export async function updateUserAddress(userId, address, walletName) {
         throw error;
     }
 }
+
+export async function getAllUserIds() {
+    try {
+        const users = await User.find({}, { userId: 1, _id: 0 }); 
+        return users.map(user => user.userId); 
+    } catch (error) {
+        console.error('Ошибка при получении списка пользователей:', error.message);
+        return [];
+    }
+}
+
+export async function getWalletAddressByUserId(userId) {
+    try {
+        const user = await User.findOne({ userId }); 
+        if (!user || !user.walletAddress) {
+            console.log(`Пользователь с ID ${userId} не найден или адрес кошелька отсутствует.`);
+            return null;
+        }
+        return user.walletAddress; 
+    } catch (error) {
+        console.error(`Ошибка при получении адреса кошелька для пользователя ${userId}:`, error.message);
+        throw error;
+    }
+}

@@ -1,4 +1,5 @@
 import bot from './bot.js';
+import { handlePublicChats } from './checks/publicChat.js';
 import connectToDatabase from './db/database.js';
 import { registerCommands } from './interactions/commands.js';
 import { registerCallbackQueries } from './interactions/menu.js';
@@ -20,6 +21,7 @@ async function main() {
         await registerCallbackQueries(bot);
 
         registerCommands(bot);
+        await handlePublicChats(bot);
 
         console.log('Started.');
     } catch (error) {

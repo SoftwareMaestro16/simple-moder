@@ -67,3 +67,14 @@ export async function getAllJettonAddressesAndSymbols() {
         throw error;
     }
 }
+
+export async function getJettonDecimals(jettonAddress) {
+    try {
+        const jetton = await Jetton.findOne({ address: jettonAddress });
+        if (!jetton) throw new Error('Jetton не найден в базе данных.');
+        return jetton.decimals;
+    } catch (error) {
+        console.error('Ошибка при получении decimals для жетона:', error.message);
+        throw new Error('Не удалось получить decimals для жетона.');
+    }
+}

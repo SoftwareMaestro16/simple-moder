@@ -1,5 +1,5 @@
 import { generateMainKeyboard, generateSubscriptionKeyboard } from "./keyboard.js";
-import { addUser, getUserById } from "../db/userMethods.js";
+import { addUser, getAllUserIds, getUserById } from "../db/userMethods.js";
 import { checkCoreSubscription } from "../utils/checkCoreSub.js";
 import { admins } from "../utils/config.js";
 import { toUserFriendlyAddress } from "@tonconnect/sdk";
@@ -20,6 +20,8 @@ import {
 } from "../db/adminMethods.js";
 import { Address } from "@ton/core";
 import { loadAdminData } from "../utils/config.js";
+import { commandsList } from "../utils/commandsList.js";
+import Chat from "../models/Chat.js";
 
 function startCommand(bot) {
     bot.onText(/\/start/, async (msg) => {
@@ -934,6 +936,175 @@ function setListinManagerCommand(bot) {
     });
 };
 
+function postCommand(bot) {
+    bot.onText(/\/post/, async (msg) => {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+
+        if (!admins.includes(userId)) {
+            return bot.sendMessage(chatId, '❌ У вас нет прав для выполнения этой команды.');
+        }
+
+        await bot.sendMessage(chatId, '📸 Отправьте фото для рассылки. Если вы хотите сделать рассылку без фото, введите /nophoto. Для отмены введите /cancel.');
+
+        let photo;
+        try {
+            photo = await new Promise((resolve, reject) => {
+                const listener = bot.on('message', async (response) => {
+                    if (response.chat.id !== chatId) return;
+
+                    if (response.text === '/cancel') {
+                        bot.removeListener('message', listener);
+                        reject('❌ Рассылка отменена.');
+                        await bot.sendMessage(chatId, '❌ Рассылка отменена.');
+                    } else if (response.text === '/nophoto') {
+                        bot.removeListener('message', listener);
+                        resolve(null);
+                        await bot.sendMessage(chatId, '✏️ Теперь отправьте текст сообщения. Для отмены введите /cancel.');
+                    } else if (response.photo) {
+                        const fileId = response.photo[response.photo.length - 1].file_id;
+                        bot.removeListener('message', listener);
+                        resolve(fileId);
+                        await bot.sendMessage(chatId, '✏️ Теперь отправьте текст сообщения. Для отмены введите /cancel.');
+                    } else {
+                        await bot.sendMessage(chatId, '❌ Пожалуйста, отправьте фото или используйте команду /nophoto. Для отмены введите /cancel.');
+                    }
+                });
+            });
+        } catch (error) {
+            console.log(error); 
+            return;
+        }
+
+        let messageText;
+        try {
+            messageText = await new Promise((resolve, reject) => {
+                const listener = bot.on('message', async (response) => {
+                    if (response.chat.id !== chatId) return;
+
+                    if (response.text === '/cancel') {
+                        bot.removeListener('message', listener);
+                        reject('❌ Рассылка отменена.');
+                        await bot.sendMessage(chatId, '❌ Рассылка отменена.');
+                    } else if (response.text) {
+                        bot.removeListener('message', listener);
+                        resolve(response.text.trim());
+                    } else {
+                        await bot.sendMessage(chatId, '❌ Пожалуйста, отправьте текст сообщения. Для отмены введите /cancel.');
+                    }
+                });
+            });
+        } catch (error) {
+            console.log(error); 
+            return;
+        }
+
+        await bot.sendMessage(chatId, '🚀 Начинаю рассылку...');
+
+        const userIds = await getAllUserIds();
+        let successCount = 0;
+        let failedCount = 0;
+
+        for (const userId of userIds) {
+            try {
+                if (photo) {
+                    await bot.sendPhoto(userId, photo, { caption: messageText, parse_mode: 'HTML' });
+                } else {
+                    await bot.sendMessage(userId, messageText, { parse_mode: 'HTML' });
+                }
+                successCount++;
+            } catch (error) {
+                if (error.response && error.response.statusCode === 403) {
+                    console.warn(`Пользователь ${userId} заблокировал бота. Пропускаем.`);
+                    failedCount++;
+                } else {
+                    console.error(`Ошибка при отправке сообщения пользователю ${userId}:`, error.message);
+                    failedCount++;
+                }
+            }
+        }
+
+        await bot.sendMessage(chatId, `✅ Рассылка завершена.\nУспешно: ${successCount}\nНе удалось: ${failedCount}`);
+    });
+}
+
+function totalChatsCommand(bot) {
+    bot.onText(/\/total_chats/, async (msg) => {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+
+        if (!admins.includes(userId)) {
+            return bot.sendMessage(chatId, '❌ У вас нет прав для выполнения этой команды.');
+        }
+
+        try {
+            const totalChats = await Chat.countDocuments(); 
+            await bot.sendMessage(chatId, `📊 Всего созданных чатов: ${totalChats}`);
+        } catch (error) {
+            console.error('Ошибка при подсчёте чатов:', error.message);
+            await bot.sendMessage(chatId, '❌ Произошла ошибка при подсчёте всех чатов.');
+        }
+    });
+}
+
+function privateChatsCommand(bot) {
+    bot.onText(/\/private_chats/, async (msg) => {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+
+        if (!admins.includes(userId)) {
+            return bot.sendMessage(chatId, '❌ У вас нет прав для выполнения этой команды.');
+        }
+
+        try {
+            const privateChats = await Chat.countDocuments({ type: 'private' }); 
+            await bot.sendMessage(chatId, `🔒 Всего созданных приватных чатов: ${privateChats}`);
+        } catch (error) {
+            console.error('Ошибка при подсчёте приватных чатов:', error.message);
+            await bot.sendMessage(chatId, '❌ Произошла ошибка при подсчёте приватных чатов.');
+        }
+    });
+}
+
+function userCountCommand(bot) {
+    bot.onText(/\/user_count/, async (msg) => {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+
+        if (!admins.includes(userId)) {
+            return bot.sendMessage(chatId, '❌ У вас нет прав для выполнения этой команды.');
+        }
+
+        try {
+            const userIds = await getAllUserIds();
+            const userCount = userIds.length; 
+
+            await bot.sendMessage(chatId, `👥 Всего ${userCount} пользователей.`);
+        } catch (error) {
+            console.error('Ошибка при получении количества пользователей:', error.message);
+            await bot.sendMessage(chatId, '❌ Произошла ошибка при получении количества пользователей.');
+        }
+    });
+}
+
+function commandsListCommand(bot) {
+    bot.onText(/\/commands/, async (msg) => {
+        const chatId = msg.chat.id;
+        const userId = msg.from.id;
+
+        if (!admins.includes(userId)) {
+            return bot.sendMessage(chatId, '❌ У вас нет прав для выполнения этой команды.');
+        }
+
+        let responseMessage = '<b>Доступные команды:</b>\n\n';
+
+        commandsList.forEach(({ command, description }) => {
+            responseMessage += `<b>${command}</b> - ${description}\n`;
+        });
+
+        await bot.sendMessage(chatId, responseMessage, { parse_mode: 'HTML' });
+    });
+}
 
 export async function registerCommands(bot) {
     startCommand(bot);
@@ -950,4 +1121,9 @@ export async function registerCommands(bot) {
     setCoreChannelCommand(bot);
     setCoreChatCommand(bot);
     setListinManagerCommand(bot);
+    postCommand(bot);
+    userCountCommand(bot);
+    totalChatsCommand(bot);
+    privateChatsCommand(bot);
+    commandsListCommand(bot);
 }

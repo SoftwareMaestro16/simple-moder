@@ -48,7 +48,7 @@ function generateResultMessage(chatInfo, jetton, nft, typeOfChat) {
             `- Порог: ${nft.amount || 'N/A'}\n\n`;
     }
 
-    message += `Для добавления чата в базу данных нажмите кнопку ниже.`;
+    message += `Для добавления чата нажмите кнопку ниже.`;
 
     return message;
 }

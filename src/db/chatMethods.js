@@ -180,3 +180,12 @@ export async function getChatRequirements(chatIdFromCallback) {
         throw new Error('Не удалось получить данные чата.');
     }
 }
+
+export async function getAllPublicChats() {
+    try {
+        return await Chat.find({ type: 'public' });
+    } catch (error) {
+        console.error('Ошибка при получении публичных чатов:', error.message);
+        throw new Error('Не удалось получить публичные чаты.');
+    }
+}

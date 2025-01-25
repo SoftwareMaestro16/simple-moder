@@ -302,7 +302,7 @@ export async function handleTokensListing(bot, chatId, messageId) {
         return bot.editMessageText('В Данном разделе предоставлены цены на Листинги Токенов. Ниже вы можете оставить Заявку: \n\n' +
             `Листинг Жетона: <b>${jettonListingPrice}</b> 💲 ~ <code>$SC ${roundedJettonPriceInSC}</code>\n` +
             `Листинг Коллекции: <b>${nftListingPrice}</b> 💲 ~ <code>$SC ${roundedNftPriceInSC}</code>\n\n` +
-            `Оплата совершается с помощью Жетона <b>$SC</b>.`,
+            `Оплата совершается через <b>$SC</b>.`,
             {
                 chat_id: chatId,
                 message_id: messageId,
@@ -525,15 +525,15 @@ export async function handleUserChats(bot, chatId, messageId) {
 
         const keyboard = generateUserChatsKeyboard(userChats);
 
-        await bot.editMessageText(
-            `📋 <b>Ваши чаты:</b>\n\nВыберите один из чатов ниже:`,
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                parse_mode: 'HTML',
-                reply_markup: keyboard,
-            }
-        );
+        const totalUserChats = userChats.length;
+        const messageText = `📋 <b>Ваши чаты:</b>\n\nВыберите один из чатов ниже:\n\n<b>Всего чатов:</b> ${totalUserChats}`;
+
+        await bot.editMessageText(messageText, {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: 'HTML',
+            reply_markup: keyboard,
+        });
     } catch (error) {
         console.error('Ошибка в handleUserChats:', error.message);
         await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
@@ -560,15 +560,15 @@ export async function handlePrivateChatsList(bot, chatId, messageId) {
 
         const keyboard = generatePrivateChatsKeyboard(privateChats);
 
-        await bot.editMessageText(
-            `📋 <b>Список приватных чатов:</b>\n\nВыберите чат для просмотра.`,
-            {
-                chat_id: chatId,
-                message_id: messageId,
-                parse_mode: 'HTML',
-                reply_markup: keyboard,
-            }
-        );
+        const totalPrivateChats = privateChats.length; 
+        const chatListText = `📋 <b>Список приватных чатов:</b>\n\nВыберите чат для просмотра.\n\n<b>Всего приватных чатов:</b> ${totalPrivateChats}`;
+
+        await bot.editMessageText(chatListText, {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: 'HTML',
+            reply_markup: keyboard,
+        });
     } catch (error) {
         console.error('Ошибка в handlePrivateChatsList:', error.message);
         await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');

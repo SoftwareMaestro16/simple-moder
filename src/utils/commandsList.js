@@ -1,0 +1,17 @@
+export const commandsList = [
+    { command: '/add_jetton', description: 'Добавить новый жетон.' },
+    { command: '/add_nft', description: 'Добавить новую коллекцию NFT.' },
+    { command: '/delete_jetton', description: 'Удалить жетон.' },
+    { command: '/delete_nft', description: 'Удалить коллекцию NFT.' },
+    { command: '/set_jetton_listing_price', description: 'Установить цену листинга жетона.' },
+    { command: '/set_nft_listing_price', description: 'Установить цену листинга коллекции NFT.' },
+    { command: '/add_admin', description: 'Добавить нового администратора.' },
+    { command: '/remove_admin', description: 'Удалить администратора.' },
+    { command: '/get_admins', description: 'Получить список всех администраторов.' },
+    { command: '/user_count', description: 'Получить количество пользователей.' },
+    { command: '/post', description: 'Сделать рассылку пользователям.' },
+    { command: '/get_core_media', description: 'Получить медиа для подписки.' },
+    { command: '/set_core_channel', description: 'Установить канал для подписки.' },
+    { command: '/set_core_chat', description: 'Установить чат для подписки.' },
+    { command: '/set_listing_manager', description: 'Установить листинг менеджера.' },
+];
