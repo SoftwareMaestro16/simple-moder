@@ -21,19 +21,17 @@ export async function handlePublicChats(bot) {
                 return;
             }
 
-            if (msg.new_chat_members) {
-                console.log(
-                    `Присоединились новые участники в чат ${chatId}: `,
-                    msg.new_chat_members
-                );
-
-                return; 
+            if (
+                msg.new_chat_members ||
+                msg.left_chat_member ||
+                msg.pinned_message 
+            ) {
+                console.log(`Системное сообщение в чате ${chatId} пропущено.`);
+                return;
             }
 
             if (msg.sender_chat) {
-                console.log(
-                    `Сообщение от канала (ID: ${msg.sender_chat.id}) пропущено.`
-                );
+                console.log(`Сообщение от канала (ID: ${msg.sender_chat.id}) пропущено.`);
                 return;
             }
 
@@ -66,113 +64,61 @@ export async function handlePublicChats(bot) {
                     );
 
                     if (userBalance < chat.jetton.jettonRequirement) {
-                        try {
-                            await bot.deleteMessage(chatId, msg.message_id);
-                        } catch (deleteError) {
-                            console.warn(
-                                `Не удалось удалить сообщение пользователя ${userId}: ${deleteError.message}`
-                            );
-                        }
-
-                        const muteUntil = Math.floor(Date.now() / 1000) + 60;
-                        await bot.restrictChatMember(chatId, userId, {
-                            can_send_messages: false,
-                            until_date: muteUntil,
-                        });
-
-                        console.log(
-                            `Muted user ${userId} in chat ${chatId} for 1 minute (insufficient balance).`
-                        );
-
-                        const requirementMessage = `
-⚠️ Чтобы писать в этом чате, вам необходимо иметь на балансе: <b>${chat.jetton.jettonRequirement} $${chat.jetton.symbol}</b>
-                        `;
-                        const botMessage = await bot.sendMessage(chatId, requirementMessage, {
-                            parse_mode: 'HTML',
-                            reply_markup: {
-                                inline_keyboard: [
-                                    [
-                                        {
-                                            text: '🤖 Перейти в Бота 💸',
-                                            url: 'https://t.me/simple_moder_bot',
-                                        },
-                                    ],
-                                ],
-                            },
-                        });
-
-                        setTimeout(async () => {
-                            try {
-                                await bot.deleteMessage(chatId, botMessage.message_id);
-                                console.log(
-                                    `Сообщение бота в чате ${chatId} удалено через 12 секунд.`
-                                );
-                            } catch (deleteError) {
-                                console.warn(
-                                    `Не удалось удалить сообщение бота в чате ${chatId}: ${deleteError.message}`
-                                );
-                            }
-                        }, 12000);
-
-                        return;
+                        await muteUser(bot, chatId, userId, msg.message_id, chat.jetton);
                     }
                 } else {
-                    try {
-                        await bot.deleteMessage(chatId, msg.message_id);
-                    } catch (deleteError) {
-                        console.warn(
-                            `Не удалось удалить сообщение пользователя ${userId}: ${deleteError.message}`
-                        );
-                    }
-
-                    const muteUntil = Math.floor(Date.now() / 1000) + 60;
-                    await bot.restrictChatMember(chatId, userId, {
-                        can_send_messages: false,
-                        until_date: muteUntil,
-                    });
-
-                    console.log(
-                        `Muted user ${userId} in chat ${chatId} for 1 minute (missing wallet).`
-                    );
-
-                    const noWalletMessage = `
-⚠️ Чтобы писать в этом чате, вам необходимо подключить кошелек и иметь на балансе: <b>${chat.jetton.jettonRequirement} $${chat.jetton.symbol}</b>
-                    `;
-                    const botMessage = await bot.sendMessage(chatId, noWalletMessage, {
-                        parse_mode: 'HTML',
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    {
-                                        text: '🤖 Перейти в Бота 💸',
-                                        url: 'https://t.me/simple_moder_bot',
-                                    },
-                                ],
-                            ],
-                        },
-                    });
-
-                    setTimeout(async () => {
-                        try {
-                            await bot.deleteMessage(chatId, botMessage.message_id);
-                            console.log(
-                                `Сообщение бота в чате ${chatId} удалено через 12 секунд.`
-                            );
-                        } catch (deleteError) {
-                            console.warn(
-                                `Не удалось удалить сообщение бота в чате ${chatId}: ${deleteError.message}`
-                            );
-                        }
-                    }, 12000);
+                    await muteUser(bot, chatId, userId, msg.message_id, chat.jetton, true);
                 }
             } catch (error) {
-                console.error(
-                    `Ошибка при проверке пользователя ${userId} в чате ${chatId}:`,
-                    error.message
-                );
+                console.error(`Ошибка при проверке пользователя ${userId} в чате ${chatId}:`, error.message);
             }
         });
     } catch (error) {
         console.error('Ошибка в handlePublicChats:', error.message);
     }
+}
+
+async function muteUser(bot, chatId, userId, messageId, jetton, noWallet = false) {
+    try {
+        await bot.deleteMessage(chatId, messageId);
+    } catch (deleteError) {
+        console.warn(`Не удалось удалить сообщение пользователя ${userId}: ${deleteError.message}`);
+    }
+
+    const muteUntil = Math.floor(Date.now() / 1000) + 60;
+    await bot.restrictChatMember(chatId, userId, {
+        can_send_messages: false,
+        until_date: muteUntil,
+    });
+
+    const warningMessage = noWallet
+        ? `
+⚠️ Чтобы писать в этом чате, вам необходимо подключить кошелек и иметь на балансе: <b>${jetton.jettonRequirement} $${jetton.symbol}</b>
+        `
+        : `
+⚠️ Чтобы писать в этом чате, вам необходимо иметь на балансе: <b>${jetton.jettonRequirement} $${jetton.symbol}</b>
+        `;
+
+    const botMessage = await bot.sendMessage(chatId, warningMessage, {
+        parse_mode: 'HTML',
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: '🤖 Перейти в Бота 💸',
+                        url: 'https://t.me/simple_moder_bot',
+                    },
+                ],
+            ],
+        },
+    });
+
+    setTimeout(async () => {
+        try {
+            await bot.deleteMessage(chatId, botMessage.message_id);
+            console.log(`Сообщение бота в чате ${chatId} удалено через 12 секунд.`);
+        } catch (deleteError) {
+            console.warn(`Не удалось удалить сообщение бота в чате ${chatId}: ${deleteError.message}`);
+        }
+    }, 12000);
 }
