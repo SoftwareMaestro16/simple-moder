@@ -37,21 +37,43 @@ export async function getUserById(userId) {
 
 export async function getUserByAddress(address) {
     try {
-      if (!address) {
-        console.log('Address is null or empty, skipping database lookup.');
-        return null;
-      }
-  
-      const user = await User.findOne({ address });
-      return user;
+        if (!address) {
+            console.log('Address is null or empty, skipping database lookup.');
+            return null;
+        }
+
+        const user = await User.findOne({ walletAddress: address });
+        return user;
     } catch (error) {
-      console.error('Error fetching user by address:', error);
-      return null;
+        console.error('Error fetching user by address:', error);
+        return null;
     }
 }
 
 export async function updateUserAddress(userId, address, walletName) {
     try {
+        if (!address) {
+            console.error(`Адрес не указан для пользователя ${userId}.`);
+            return null;
+        }
+
+        const existingUserWithAddress = await getUserByAddress(address);
+        if (existingUserWithAddress && existingUserWithAddress.userId !== userId) {
+            console.log(`Кошелек ${address} уже привязан к другому пользователю.`);
+            
+            const sentMessage = await bot.sendMessage(chatId, `❌ Кошелек ${address} уже привязан к другому пользователю.`, {
+                parse_mode: 'HTML'
+            });
+
+            setTimeout(() => {
+                bot.deleteMessage(chatId, sentMessage.message_id).catch(err => {
+                    console.error('Ошибка при удалении сообщения:', err);
+                });
+            }, 7000);
+
+            return null; 
+        }
+
         const user = await User.findOne({ userId });
 
         if (!user) {

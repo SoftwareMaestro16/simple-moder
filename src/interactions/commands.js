@@ -33,13 +33,15 @@ function startCommand(bot) {
         try {
             const adminData = await loadAdminData();
             const coreMedia = adminData.coreMedia;
-            const existingUser = await getUserById(userId);
+
+            let existingUser = await getUserById(userId);
 
             if (!existingUser) {
                 await addUser(userId, firstName, userName);
+                existingUser = await getUserById(userId);
             }
 
-            const address = existingUser?.walletAddress || null; 
+            const address = existingUser?.walletAddress || null;
             const isSubscribed = await checkCoreSubscription(userId);
 
             if (isSubscribed) {
@@ -74,46 +76,51 @@ function startCommand(bot) {
         const callbackData = callbackQuery.data;
 
         if (callbackData === 'CheckSubscription') {
-            const isSubscribed = await checkCoreSubscription(userId);
+            try {
+                const isSubscribed = await checkCoreSubscription(userId);
 
-            if (isSubscribed) {
-                const existingUser = await getUserById(userId);
-                const address = existingUser?.address || null;
+                if (isSubscribed) {
+                    const existingUser = await getUserById(userId);
+                    const address = existingUser?.walletAddress || null;
 
-                if (address) {
-                    bot.editMessageText(
-                        '✅ Ваш кошелек подключен. Выберите действие:',
-                        {
-                            chat_id: chatId,
-                            message_id: messageId,
-                            reply_markup: {
-                                inline_keyboard: generateMainKeyboard(address),
-                            },
-                        }
-                    );
+                    if (address) {
+                        await bot.editMessageText(
+                            '✅ Ваш кошелек подключен. Выберите действие:',
+                            {
+                                chat_id: chatId,
+                                message_id: messageId,
+                                reply_markup: {
+                                    inline_keyboard: generateMainKeyboard(address),
+                                },
+                            }
+                        );
+                    } else {
+                        await bot.editMessageText(
+                            '👛 Добро пожаловать! Выберите кошелек для подключения.',
+                            {
+                                chat_id: chatId,
+                                message_id: messageId,
+                                reply_markup: {
+                                    inline_keyboard: generateMainKeyboard(null),
+                                },
+                            }
+                        );
+                    }
                 } else {
-                    bot.editMessageText(
-                        '👛 Добро пожаловать! Выберите кошелек для подключения.',
-                        {
-                            chat_id: chatId,
-                            message_id: messageId,
-                            reply_markup: {
-                                inline_keyboard: generateMainKeyboard(null),
-                            },
-                        }
+                    const sentMessage = await bot.sendMessage(
+                        chatId,
+                        '❗️ Вы не подписались на канал и чат. Пожалуйста, подпишитесь.'
                     );
-                }
-            } else {
-                const sentMessage = await bot.sendMessage(
-                    chatId,
-                    '❗️ Вы не подписались на канал и чат. Пожалуйста, подпишитесь.',
-                );
 
-                setTimeout(() => {
-                    bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
-                        console.error('Ошибка удаления сообщения:', err);
-                    });
-                }, 7000);
+                    setTimeout(() => {
+                        bot.deleteMessage(chatId, sentMessage.message_id).catch((err) => {
+                            console.error('Ошибка удаления сообщения:', err);
+                        });
+                    }, 7000);
+                }
+            } catch (error) {
+                console.error('Ошибка при обработке CheckSubscription:', error);
+                bot.sendMessage(chatId, 'Произошла ошибка при проверке подписки.');
             }
         }
     });

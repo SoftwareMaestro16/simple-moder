@@ -1,4 +1,7 @@
 import bot from './bot.js';
+import { handleComboChats } from './checks/privateComboChat.js';
+import { handlePrivateJettonChats } from './checks/privateJettonChat.js';
+import { handlePrivateNftChats } from './checks/privateNftChat.js';
 import { handlePublicChats } from './checks/publicChat.js';
 import connectToDatabase from './db/database.js';
 import { registerCommands } from './interactions/commands.js';
@@ -22,6 +25,9 @@ async function main() {
 
         registerCommands(bot);
         await handlePublicChats(bot);
+        await handlePrivateJettonChats(bot);
+        await handlePrivateNftChats(bot);
+        await handleComboChats(bot);
 
         console.log('Started.');
     } catch (error) {

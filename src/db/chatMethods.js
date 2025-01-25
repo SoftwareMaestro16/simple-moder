@@ -189,3 +189,52 @@ export async function getAllPublicChats() {
         throw new Error('Не удалось получить публичные чаты.');
     }
 }
+
+export async function getAllPrivateJettonChats() {
+    try {
+        return await Chat.find({
+            type: 'private',
+            comboCheck: false,
+            'jetton.jettonAddress': { $exists: true, $ne: null },
+            'jetton.jettonRequirement': { $gt: 0 },
+            $or: [
+                { nft: { $exists: false } },
+                { 'nft.collectionAddress': { $exists: false } },
+                { nft: null }
+            ]
+        });
+    } catch (error) {
+        console.error('Ошибка при получении приватных чатов с требованиями по жетонам:', error.message);
+        throw new Error('Не удалось получить приватные чаты с требованиями.');
+    }
+}
+
+export async function getAllPrivateNftChats() {
+    try {
+        return await Chat.find({
+            type: 'private',
+            comboCheck: false,
+            'nft.collectionAddress': { $exists: true, $ne: null },
+            'nft.nftRequirement': { $gt: 0 },
+        });
+    } catch (error) {
+        console.error('Ошибка при получении приватных чатов с требованиями по NFT:', error.message);
+        throw new Error('Не удалось получить приватные чаты с требованиями по NFT.');
+    }
+}
+
+export async function getAllComboChats() {
+    try {
+        return await Chat.find({
+            type: 'private',
+            comboCheck: true,
+            'jetton.jettonAddress': { $exists: true, $ne: null },
+            'jetton.jettonRequirement': { $gt: 0 },
+            'nft.collectionAddress': { $exists: true, $ne: null },
+            'nft.nftRequirement': { $gt: 0 },
+        });
+    } catch (error) {
+        console.error('Ошибка при получении комбо-чатов:', error.message);
+        throw new Error('Не удалось получить комбо-чаты.');
+    }
+}

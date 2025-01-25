@@ -9,8 +9,10 @@ import {
     generateChoosePrivateChatCategoryKeyboard,
     generateJettonListForSelectKeyboard,
     generateUserChatsKeyboard,
-    generatePrivateChatsKeyboard
+    generatePrivateChatsKeyboard,
+    generateWalletsKeyboard
 } from "./keyboard.js";
+import User from "../models/User.js";
 import { getWalletInfo } from "../tonConnect/wallets.js";
 import { getConnector } from "../tonConnect/connector.js";
 import { generateQRCode } from "../tonConnect/connector.js";
@@ -63,16 +65,33 @@ export async function handleProfile(bot, chatId, messageId) {
 };
 
 export async function handleDisconnectWallet(bot, chatId, messageId) {
-    await updateUserAddress(chatId, null, null);
-  
-    const keyboard = generateProfileKeyboard('Не Подключен');
-  
-    await bot.editMessageText('🔑 Кошелек отключен. Выберите новый для подключения:', {
-      chat_id: chatId,
-      message_id: messageId,
-      reply_markup: keyboard,
-    }); 
-};
+    try {
+        const user = await User.findOne({ userId: chatId });
+
+        if (!user) {
+            console.error(`Пользователь с ID ${chatId} не найден.`);
+            await bot.sendMessage(chatId, '❌ Пользователь не найден. Попробуйте снова.');
+            return;
+        }
+
+        user.walletAddress = null;
+        user.appWalletName = null;
+
+        await user.save();
+        console.log(`Кошелек пользователя с ID ${chatId} успешно отключен.`);
+
+        const keyboard = generateProfileKeyboard('Не Подключен');
+
+        await bot.editMessageText('🔑 Кошелек отключен. Выберите новый для подключения:', {
+            chat_id: chatId,
+            message_id: messageId,
+            reply_markup: keyboard,
+        });
+    } catch (error) {
+        console.error('Ошибка при отключении кошелька:', error);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка при отключении кошелька. Попробуйте позже.');
+    }
+}
   
 export async function handleWalletConnection(bot, chatId, walletName, messageId) {
     try {
@@ -97,53 +116,61 @@ export async function handleWalletConnection(bot, chatId, walletName, messageId)
                 return;
             }
   
-            if (wallet) {
-                const userFriendlyAddress = toUserFriendlyAddress(wallet.account.address);
+            const userFriendlyAddress = toUserFriendlyAddress(wallet.account.address);
   
-                if (!userFriendlyAddress) {
-                    console.error('Invalid wallet address detected.');
-                    return;
-                }
+            if (!userFriendlyAddress) {
+                console.error('Invalid wallet address detected.');
+                return;
+            }
   
-                const existingUser = await getUserByAddress(userFriendlyAddress);
-  
-                if (existingUser) {
+            const existingUser = await getUserByAddress(userFriendlyAddress);
+
+            if (existingUser) {
+                if (existingUser.userId !== chatId) {
+                    const warningMessage = await bot.sendMessage(
+                        chatId,
+                        `❌ Кошелек <code>${getShortAddress(userFriendlyAddress)}</code> уже привязан к другому пользователю. Пожалуйста, используйте другой кошелек.`,
+                        {
+                            parse_mode: 'HTML',
+                            chat_id: chatId,
+                            message_id: messageId,
+                            reply_markup: generateWalletsKeyboard(),
+                        }
+                    );
+                    
                     if (qrMessageId) {
                         await bot.deleteMessage(chatId, qrMessageId);
                     }
-  
-                    await bot.sendMessage(
-                        chatId,
-                        '❌ Данный кошелек уже был подключен ранее. Пожалуйста, используйте другой кошелек.',
-                        generateMainKeyboard()
-                    );
+
+                    setTimeout(() => {
+                        bot.deleteMessage(chatId, warningMessage.message_id).catch((err) => {
+                            console.error('Ошибка при удалении сообщения:', err);
+                        });
+                    }, 7000);
+
                     return;
                 }
-  
-                updateUserAddress(chatId, userFriendlyAddress, wallet.device.appName);
-  
-                if (qrMessageId) {
-                    await bot.deleteMessage(chatId, qrMessageId);
-                }
-  
-                bot.sendMessage(
-                    chatId,
-                    `🎉 <b>${wallet.device.appName}</b> Кошелек Подключен!\n` +
-                    `Адрес: <code>${getShortAddress(userFriendlyAddress)}</code>`,
-                    {
-                        parse_mode: 'HTML',
-                        reply_markup: {
-                            inline_keyboard: [
-                                [
-                                    { text: 'Профиль 👤', callback_data: 'Profile' },
-                                ],
-                            ],
-                        },
-                    }
-                );
-            } else {
-                bot.sendMessage(chatId, 'Кошелек Отключен.');
             }
+
+            await updateUserAddress(chatId, userFriendlyAddress, wallet.device.appName);
+
+            if (qrMessageId) {
+                await bot.deleteMessage(chatId, qrMessageId);
+            }
+
+            bot.sendMessage(
+                chatId,
+                `🎉 <b>${wallet.device.appName}</b> Кошелек подключен!\n` +
+                `Адрес: <code>${getShortAddress(userFriendlyAddress)}</code>`,
+                {
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: 'Профиль 👤', callback_data: 'Profile' }],
+                        ],
+                    },
+                }
+            );
         });
   
         const link = connector.connect({
@@ -157,22 +184,17 @@ export async function handleWalletConnection(bot, chatId, walletName, messageId)
             caption: `Отсканируйте QR Code, чтобы подключить ${walletName} Кошелек.`,
             reply_markup: {
                 inline_keyboard: [
-                    [
-                        {
-                            text: 'Подключить Кошелек 👛',
-                            url: link,
-                        },
-                    ],
+                    [{ text: 'Подключить Кошелек 👛', url: link }],
                 ],
             },
         });
   
         qrMessageId = sentMessage.message_id;
     } catch (error) {
-        console.error('Error handling wallet connection:', error);
-        bot.sendMessage(chatId, 'Произошла ошибка. Попробуйте позже.');
+        console.error('Ошибка при обработке подключения кошелька:', error);
+        bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
-};
+}
 
 export async function handleDefaultMenu(bot, chatId, messageId) {
     try {
@@ -381,7 +403,6 @@ export async function handlePrivateChatSetup(bot, chatId, messageId) {
                 return;
             }
 
-            // Проверяем тип чата
             if (chatInfo.type !== 'group' && chatInfo.type !== 'supergroup') {
                 await bot.sendMessage(
                     chatId,
@@ -390,7 +411,6 @@ export async function handlePrivateChatSetup(bot, chatId, messageId) {
                 return;
             }
 
-            // Проверяем, является ли пользователь администратором
             const chatAdmins = await bot.getChatAdministrators(chatIdInput).catch(() => []);
             const isAdmin = chatAdmins.some((admin) => admin.user.id === message.from.id);
 

@@ -31,6 +31,18 @@ export function generateMainKeyboard(address) {
           ];
 }
 
+export function generateWalletsKeyboard() {
+    return {
+        inline_keyboard: [
+            [
+                { text: 'Tonkeeper', callback_data: 'Tonkeeper' },
+                { text: 'MyTonWallet', callback_data: 'MyTonWallet' },
+                { text: 'TonHub', callback_data: 'TonHub' },
+            ],
+        ],
+    };
+}
+
 export async function generteCreateChatKeyboard() {
     return {
         inline_keyboard: [

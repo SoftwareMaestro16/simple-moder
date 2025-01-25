@@ -4,8 +4,23 @@ import { generteReturnMainKeyboard } from "../../interactions/keyboard.js";
 export async function finalizeSetup(bot, chatId) {
     const { chatInfo = {}, jetton = {}, nft = {}, typeOfChat = 'N/A' } = bot.context;
 
-    const resultMessage = generateResultMessage(chatInfo, jetton, nft, typeOfChat);
+    if (typeOfChat === 'private') {
+        try {
+            const newInviteLinkObj = await bot.createChatInviteLink(chatInfo.id, {
+                name: 'SimpleModer RequestLink',
+                creates_join_request: true,
+            });
+            chatInfo.invite_link = newInviteLinkObj.invite_link;
 
+            console.log(`✅ Создана ссылка с заявкой на вступление для чат ${chatInfo.id}:\n`, chatInfo.invite_link);
+        } catch (error) {
+            console.error('❌ Не удалось создать ссылку с заявкой на вступление:', error.message);
+        }
+    } else {
+        console.log(`⚠️ Либо chatInfo.type !== 'supergroup', либо typeOfChat !== 'private'. Ссылка с заявкой не создаётся.`);
+    }
+
+    const resultMessage = generateResultMessage(chatInfo, jetton, nft, typeOfChat);
     const sentMessage = await bot.sendMessage(chatId, resultMessage, {
         parse_mode: 'HTML',
         reply_markup: generateFinalizeKeyboard(),
@@ -34,7 +49,7 @@ function generateResultMessage(chatInfo, jetton, nft, typeOfChat) {
         `<b>Чат:</b> ${chatInfo?.title || 'N/A'}\n` +
         `<b>ID:</b> ${chatInfo?.id || 'N/A'}\n` +
         `<b>Ссылка:</b> ${chatInfo?.invite_link || 'Отсутствует'}\n` +
-        `<b>Тип чата:</b> ${typeOfChat}\n\n`;
+        `<b>Тип чата:</b> ${typeOfChat}\n`
 
     if (Object.keys(jetton).length > 0) {
         message += `<b>Jetton:</b>\n` +
