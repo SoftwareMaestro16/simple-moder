@@ -98,6 +98,7 @@ export async function handlePrivateJettonChats(bot) {
                         if (!walletAddress) {
                             console.log(`У участника ${memberId} в чате ${chatId} нет кошелька. Удаляем.`);
                             await bot.banChatMember(chatId, memberId);
+                            await bot.unbanChatMember(chatId, memberId);
                             await Chat.updateOne(
                                 { _id: chat._id },
                                 { $pull: { members: memberId } } 

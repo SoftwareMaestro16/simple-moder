@@ -55,7 +55,6 @@ export async function handleComboChats(bot) {
                     console.log(`Пользователь ${userId} соответствует требованиям. Одобряем запрос.`);
                     await bot.approveChatJoinRequest(chatId, userId);
 
-                    // Добавляем пользователя в members
                     const updateResult = await Chat.updateOne(
                         { chatId: chatId.toString() },
                         { $addToSet: { members: userId.toString() } }
@@ -89,7 +88,6 @@ export async function handleComboChats(bot) {
                 const leftUserId = msg.left_chat_member.id;
                 console.log(`Пользователь ${leftUserId} покинул чат ${chatId}.`);
 
-                // Удаляем пользователя из members
                 const updateResult = await Chat.updateOne(
                     { chatId: chatId.toString() },
                     { $pull: { members: leftUserId.toString() } }
