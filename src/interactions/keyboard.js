@@ -300,7 +300,7 @@ export function generateChoosePrivateChatCategoryKeyboard() {
 }
 
 export function generateUserChatsKeyboard(chats, currentPage = 1) {
-    const itemsPerPage = 1; 
+    const itemsPerPage = 5; 
     const totalPages = Math.ceil(chats.length / itemsPerPage); 
     const offset = (currentPage - 1) * itemsPerPage; 
     const currentChats = chats.slice(offset, offset + itemsPerPage); 
