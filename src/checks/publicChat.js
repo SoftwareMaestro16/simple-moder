@@ -3,8 +3,6 @@ import { getJettonDecimals } from "../db/jettonMethods.js";
 import getJettonBalance from "../utils/getUserBalances/getJettonBalance.js";
 import { getWalletAddressByUserId } from "../db/userMethods.js";
 
-const newUserMessagesSkipped = {};
-
 export async function handlePublicChats(bot) {
     try {
         const publicChats = await getAllPublicChats();
@@ -24,21 +22,25 @@ export async function handlePublicChats(bot) {
             }
 
             if (msg.new_chat_members) {
-                console.log(`Присоединились новые участники в чат ${chatId}: `, msg.new_chat_members);
+                console.log(
+                    `Присоединились новые участники в чат ${chatId}: `,
+                    msg.new_chat_members
+                );
 
-                for (const newMember of msg.new_chat_members) {
-                    newUserMessagesSkipped[`${newMember.id}_${chatId}`] = true;
-                }
                 return; 
             }
 
             if (msg.sender_chat) {
-                console.log(`Сообщение от привязанного канала (ID: ${msg.sender_chat.id}) пропущено.`);
+                console.log(
+                    `Сообщение от канала (ID: ${msg.sender_chat.id}) пропущено.`
+                );
                 return;
             }
 
             const chat = publicChats.find((c) => c.chatId === chatId.toString());
-            if (!chat || !chat.jetton || !chat.jetton.jettonAddress) return;
+            if (!chat || !chat.jetton || !chat.jetton.jettonAddress) {
+                return;
+            }
 
             const userId = msg.from.id;
 
@@ -48,15 +50,6 @@ export async function handlePublicChats(bot) {
                 .catch(() => false);
 
             if (isAdmin) {
-                return;
-            }
-
-            const userKey = `${userId}_${chatId}`;
-            if (newUserMessagesSkipped[userKey]) {
-                console.log(
-                    `Первое сообщение нового пользователя ${userId} в чате ${chatId} пропущено без проверки.`
-                );
-                delete newUserMessagesSkipped[userKey];
                 return;
             }
 
@@ -88,7 +81,7 @@ export async function handlePublicChats(bot) {
                         });
 
                         console.log(
-                            `Muted user ${userId} in chat ${chatId} for 1 minute due to insufficient balance.`
+                            `Muted user ${userId} in chat ${chatId} for 1 minute (insufficient balance).`
                         );
 
                         const requirementMessage = `
@@ -139,7 +132,7 @@ export async function handlePublicChats(bot) {
                     });
 
                     console.log(
-                        `Muted user ${userId} in chat ${chatId} for 1 minute due to missing wallet.`
+                        `Muted user ${userId} in chat ${chatId} for 1 minute (missing wallet).`
                     );
 
                     const noWalletMessage = `
@@ -174,7 +167,7 @@ export async function handlePublicChats(bot) {
                 }
             } catch (error) {
                 console.error(
-                    `Ошибка при проверке баланса пользователя ${userId} в чате ${chatId}:`,
+                    `Ошибка при проверке пользователя ${userId} в чате ${chatId}:`,
                     error.message
                 );
             }
