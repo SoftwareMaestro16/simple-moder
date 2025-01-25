@@ -19,6 +19,11 @@ export async function handlePublicChats(bot) {
                 return; 
             }
 
+            if (msg.new_chat_members) {
+                console.log(`Присоединение новых участников в чат ${msg.chat.id}: ${msg.new_chat_members.map(m => m.id).join(', ')}`);
+                return;
+            }
+
             const chatId = msg.chat.id;
 
             if (msg.sender_chat) {
