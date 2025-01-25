@@ -1,4 +1,4 @@
-import NFT from '../models/Nft.js';
+import NFT from '../models/NFT.js';
 
 export async function addNFT(address, name) {
     NFT.syncIndexes()
