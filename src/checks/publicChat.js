@@ -23,10 +23,9 @@ export async function handlePublicChats(bot) {
 
             if (msg.new_chat_members) {
                 console.log(
-                    `Присоединение новых участников в чат ${chatId}: ` + 
-                    msg.new_chat_members.map(m => m.id).join(', ')
+                    `Присоединение новых участников в чат ${chatId}: `
                 );
-                return;
+                return; 
             }
 
             if (msg.sender_chat) {
@@ -59,6 +58,13 @@ export async function handlePublicChats(bot) {
                         chat.jetton.jettonAddress,
                         decimals
                     );
+
+                    if (msg.new_chat_members) {
+                        console.log(
+                            `Присоединение новых участников в чат ${chatId}: `
+                        );
+                        return; 
+                    }
 
                     if (userBalance < chat.jetton.jettonRequirement) {
                         try {
@@ -122,6 +128,13 @@ export async function handlePublicChats(bot) {
                         );
                     }
 
+                    if (msg.new_chat_members) {
+                        console.log(
+                            `Присоединение новых участников в чат ${chatId}: `
+                        );
+                        return; 
+                    }
+
                     const muteUntil = Math.floor(Date.now() / 1000) + 60;
                     await bot.restrictChatMember(chatId, userId, {
                         can_send_messages: false,
@@ -142,7 +155,7 @@ export async function handlePublicChats(bot) {
                                 [
                                     {
                                         text: '🤖 Перейти в Бота 💸',
-                                        url: 'https://t.me/simple_moder_bot',
+                                            url: 'https://t.me/simple_moder_bot',
                                     },
                                 ],
                             ],
