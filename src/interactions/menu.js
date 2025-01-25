@@ -9,7 +9,9 @@ import {
     handleCreateChat,
     handlePrivateChatSetup,
     handlePublicChatSetup,
-    handleUserChats
+    handleUserChats,
+    handlePrivateChatsList,
+    handleChatRequirements
 } from "./handlers.js";
 import {
     handleSelectJetton,
@@ -23,6 +25,7 @@ import {
     handleJettonSelectPagination,
     handleNFTPagination,
     handleNFTSelectPagination,
+    handlePrivateChatsListPagination,
     handleUserChatsPagination,
 } from '../utils/chat/callbackCheckers.js';
 
@@ -57,6 +60,16 @@ export function registerCallbackQueries(bot) {
                 await handleUserChatsPagination(bot, callbackData, chatId, messageId);
                 return;
             }
+
+            if (callbackData.startsWith('private_page_')) {
+                await handlePrivateChatsListPagination(bot, callbackData, chatId, messageId);
+                return;
+            }
+
+            if (callbackData.startsWith('chat_requirements_')) {
+                await handleChatRequirements(bot, callbackData, chatId, messageId);
+                return;
+            }       
 
             console.log('Unhandled callback_query:', callbackData);
         } catch (error) {
@@ -114,7 +127,9 @@ export function registerCallbackQueries(bot) {
         else if (callbackData === 'MyChats') {
             await handleUserChats(bot, chatId, messageId);
         }
-
+        else if (callbackData === 'EnterInChat') {
+            await handlePrivateChatsList(bot, chatId, messageId);
+        }
         
     });
 }

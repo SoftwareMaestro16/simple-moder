@@ -2,6 +2,7 @@ import Chat from '../models/Chat.js';
 import { getJettonData } from '../utils/getTokensData/getJettonData.js';
 import { getCollectionData } from '../utils/getTokensData/getCollectionData.js';
 import { generteReturnMainKeyboard } from '../interactions/keyboard.js';
+import { toUserFriendlyAddress } from "@tonconnect/sdk";
 
 export async function addChatToDatabase(bot, callbackQuery) {
     try {
@@ -126,7 +127,6 @@ export async function isDuplicateChat(chatIdInput) {
     }
 }
 
-
 export async function getUserChats(userId) {
     try {
         const userChats = await Chat.find({ adminId: userId });
@@ -134,5 +134,49 @@ export async function getUserChats(userId) {
     } catch (error) {
         console.error('Ошибка при получении чатов пользователя:', error.message);
         throw new Error('Не удалось получить чаты пользователя.');
+    }
+}
+
+export async function getPrivateChatsList() {
+    try {
+        const privateChats = await Chat.find({ type: 'private' }); 
+        return privateChats;
+    } catch (error) {
+        console.error('Ошибка при получении списка приватных чатов:', error.message);
+        throw new Error('Не удалось получить список приватных чатов.');
+    }
+}
+
+export async function getChatRequirements(chatIdFromCallback) {
+    try {
+        const chat = await Chat.findOne({ chatId: chatIdFromCallback });
+
+        if (!chat) {
+            return null;
+        }
+
+        let requirementsText = '⭐️ Чтобы вступить необходимо:\n\n';
+
+        if (chat.jetton && chat.jetton.symbol && chat.jetton.jettonRequirement) {
+            requirementsText += `🪙 Jetton: ${chat.jetton.jettonRequirement} $${chat.jetton.symbol}\n`;
+            requirementsText += `- <a href="https://swap.coffee/dex?ft=TON&st=${toUserFriendlyAddress(chat.jetton.jettonAddress)}">Купить ${chat.jetton.symbol}</a>\n\n`;
+        }
+
+        if (chat.nft && chat.nft.name && chat.nft.nftRequirement) {
+            requirementsText += `🖼 NFT: ${chat.nft.nftRequirement}шт. ${chat.nft.name}\n`;
+            requirementsText += `- <a href="https://getgems.io/collection/${toUserFriendlyAddress(chat.nft.collectionAddress)}">Купить NFT</a>\n`;
+        }
+
+        if (chat.comboCheck) {
+            requirementsText += '\n💫 Требуется выполнение всех условий.\n';
+        }
+
+        return {
+            text: requirementsText,
+            inviteLink: chat.inviteLink,
+        };
+    } catch (error) {
+        console.error('Ошибка при получении требований чата:', error.message);
+        throw new Error('Не удалось получить данные чата.');
     }
 }

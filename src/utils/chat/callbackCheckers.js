@@ -1,7 +1,8 @@
-import { generateJettonListForSelectKeyboard, generateJettonListKeyboard, generateNFTListForSelectKeyboard, generateNFTListKeyboard, generateUserChatsKeyboard } from "../../interactions/keyboard.js";
+import { generateJettonListForSelectKeyboard, generateJettonListKeyboard, generateNFTListForSelectKeyboard, generateNFTListKeyboard, generatePrivateChatsKeyboard, generateUserChatsKeyboard } from "../../interactions/keyboard.js";
 import { getAllJettonAddressesAndSymbols, getAllJettonSymbols } from "../../db/jettonMethods.js";
 import { getAllCollectionsWithAddresses, getAllNamesCollection } from "../../db/nftMethods.js";
 import Chat from "../../models/Chat.js";
+import { getPrivateChatsList } from "../../db/chatMethods.js";
 
 export async function handleJettonPagination(bot, callbackData, chatId, messageId) {
     const parts = callbackData.split('_');
@@ -93,6 +94,44 @@ export async function handleUserChatsPagination(bot, callbackData, chatId, messa
         );
     } catch (error) {
         console.error('Ошибка в handleUserChatsPagination:', error);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
+    }
+}
+
+export async function handlePrivateChatsListPagination(bot, callbackData, chatId, messageId) {
+    try {
+        const parts = callbackData.split('_');
+        const currentPage = parseInt(parts[2], 10); 
+
+        const privateChats = await getPrivateChatsList();
+
+        if (!privateChats.length) {
+            await bot.editMessageText(
+                '❌ Нет доступных приватных чатов.',
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '« Назад', callback_data: 'Menu' }]],
+                    },
+                }
+            );
+            return;
+        }
+
+        const keyboard = generatePrivateChatsKeyboard(privateChats, currentPage);
+
+        await bot.editMessageText(
+            `📋 <b>Список приватных чатов:</b>\n\nВыберите чат для просмотра.`,
+            {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: 'HTML',
+                reply_markup: keyboard,
+            }
+        );
+    } catch (error) {
+        console.error('Ошибка в handlePrivateChatsListPagination:', error.message);
         await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }

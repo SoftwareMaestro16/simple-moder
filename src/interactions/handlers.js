@@ -8,7 +8,8 @@ import {
     generteReturnMainKeyboard,
     generateChoosePrivateChatCategoryKeyboard,
     generateJettonListForSelectKeyboard,
-    generateUserChatsKeyboard
+    generateUserChatsKeyboard,
+    generatePrivateChatsKeyboard
 } from "./keyboard.js";
 import { getWalletInfo } from "../tonConnect/wallets.js";
 import { getConnector } from "../tonConnect/connector.js";
@@ -21,7 +22,7 @@ import { getShortAddress } from "../utils/getShortAddress.js";
 import { getTokensListingPrice } from "../db/adminMethods.js";
 import { getSimpleCoinPrice } from "../utils/getSCPrice.js";
 import { loadAdminData } from "../utils/config.js";
-import { getUserChats, isDuplicateChat } from "../db/chatMethods.js";
+import { getChatRequirements, getPrivateChatsList, getUserChats, isDuplicateChat } from "../db/chatMethods.js";
 
 export async function handleProfile(bot, chatId, messageId) {
     try {
@@ -535,6 +536,85 @@ export async function handleUserChats(bot, chatId, messageId) {
         );
     } catch (error) {
         console.error('Ошибка в handleUserChats:', error.message);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
+    }
+}
+
+export async function handlePrivateChatsList(bot, chatId, messageId) {
+    try {
+        const privateChats = await getPrivateChatsList();
+
+        if (!privateChats.length) {
+            await bot.editMessageText(
+                '❌ Нет доступных приватных чатов.',
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '« Назад', callback_data: 'Menu' }]],
+                    },
+                }
+            );
+            return;
+        }
+
+        const keyboard = generatePrivateChatsKeyboard(privateChats);
+
+        await bot.editMessageText(
+            `📋 <b>Список приватных чатов:</b>\n\nВыберите чат для просмотра.`,
+            {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: 'HTML',
+                reply_markup: keyboard,
+            }
+        );
+    } catch (error) {
+        console.error('Ошибка в handlePrivateChatsList:', error.message);
+        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
+    }
+}
+
+export async function handleChatRequirements(bot, callbackData, chatId, messageId) {
+    try {
+        const parts = callbackData.split('_'); 
+        const chatIdFromCallback = parts[2];
+        const currentPage = parts[3] || 1; 
+
+        const chatData = await getChatRequirements(chatIdFromCallback);
+
+        if (!chatData) {
+            await bot.editMessageText(
+                '❌ Чат не найден.',
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '« Назад', callback_data: `private_page_${currentPage}` }]],
+                    },
+                }
+            );
+            return;
+        }
+
+        const keyboard = {
+            inline_keyboard: [
+                [{ text: '🍑 Вступить в Чат 💬', url: chatData.inviteLink }],
+                [{ text: '« Назад', callback_data: `private_page_${currentPage}` }], 
+            ],
+        };
+
+        await bot.editMessageText(
+            chatData.text,
+            {
+                chat_id: chatId,
+                message_id: messageId,
+                parse_mode: 'HTML',
+                reply_markup: keyboard,
+            }
+        );
+    } catch (error) {
+        console.error('Ошибка в handleChatRequirements:', error.message);
         await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }

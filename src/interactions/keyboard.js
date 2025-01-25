@@ -327,3 +327,44 @@ export function generateUserChatsKeyboard(chats, currentPage = 1) {
         inline_keyboard: keyboard,
     };
 }
+
+export function generatePrivateChatsKeyboard(chats, currentPage = 1) {
+    const itemsPerPage = 5; 
+    const totalPages = Math.ceil(chats.length / itemsPerPage);
+    const offset = (currentPage - 1) * itemsPerPage;
+    const currentChats = chats.slice(offset, offset + itemsPerPage);
+
+    const keyboard = [];
+    const rowSize = 1; 
+
+    for (let i = 0; i < currentChats.length; i += rowSize) {
+        const row = currentChats.slice(i, i + rowSize).map(chat => ({
+            text: chat.name,
+            callback_data: `chat_requirements_${chat.chatId}_${currentPage}`, 
+        }));
+        keyboard.push(row);
+    }
+
+    const navigationRow = [];
+    if (currentPage > 1) {
+        navigationRow.push({ text: '⬅️', callback_data: `private_page_${currentPage - 1}` });
+    } else {
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
+    }
+
+    navigationRow.push({ text: `· ${currentPage} / ${totalPages} ·`, callback_data: 'noop' });
+
+    if (currentPage < totalPages) {
+        navigationRow.push({ text: '➡️', callback_data: `private_page_${currentPage + 1}` });
+    } else {
+        navigationRow.push({ text: '🔘', callback_data: 'noop' }); 
+    }
+
+    keyboard.push(navigationRow);
+
+    keyboard.push([{ text: '« Назад', callback_data: 'Menu' }]);
+
+    return {
+        inline_keyboard: keyboard,
+    };
+}
