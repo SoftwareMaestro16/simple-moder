@@ -194,7 +194,6 @@ export async function handleWalletConnection(bot, chatId, walletName, messageId)
         qrMessageId = sentMessage.message_id;
     } catch (error) {
         console.error('Ошибка при обработке подключения кошелька:', error);
-        bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }
 
@@ -438,7 +437,6 @@ export async function handlePrivateChatSetup(bot, chatId, messageId) {
         });
     } catch (error) {
         console.error('Ошибка в handlePrivateChatSetup:', error);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }
 
@@ -523,7 +521,6 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
         });
     } catch (error) {
         console.error('Ошибка в handlePublicChatSetup:', error);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }
 
@@ -558,7 +555,6 @@ export async function handleUserChats(bot, chatId, messageId) {
         });
     } catch (error) {
         console.error('Ошибка в handleUserChats:', error.message);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }
 
@@ -613,7 +609,6 @@ export async function handleUserChatInfo(bot, callbackData, chatId, messageId) {
         });
     } catch (error) {
         console.error('Ошибка в handleUserChatInfo:', error.message);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }
 
@@ -668,7 +663,6 @@ export async function handlePrivateChatsList(bot, chatId, messageId) {
         });
     } catch (error) {
         console.error('Ошибка в handlePrivateChatsList:', error.message);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }
 
@@ -712,6 +706,5 @@ export async function handleChatRequirements(bot, callbackData, chatId, messageI
         );
     } catch (error) {
         console.error('Ошибка в handleChatRequirements:', error.message);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }

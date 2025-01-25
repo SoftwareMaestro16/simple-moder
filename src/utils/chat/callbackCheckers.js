@@ -121,6 +121,5 @@ export async function handlePrivateChatsListPagination(bot, callbackData, chatId
         );
     } catch (error) {
         console.error('Ошибка в handlePrivateChatsListPagination:', error.message);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте позже.');
     }
 }
