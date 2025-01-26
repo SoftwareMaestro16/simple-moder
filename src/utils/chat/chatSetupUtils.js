@@ -82,9 +82,18 @@ function generateFinalizeKeyboard() {
 async function handleAddChat(bot, chatId, callbackQuery) {
     try {
         if (bot.context.lastMessageId) {
-            await bot.deleteMessage(chatId, bot.context.lastMessageId);
-            bot.context.lastMessageId = null;
+            try {
+                await bot.deleteMessage(chatId, bot.context.lastMessageId);
+                bot.context.lastMessageId = null;
+            } catch (error) {
+                if (error.response?.error_code === 400) {
+                    console.warn('Сообщение уже удалено или недоступно:', error.message);
+                } else {
+                    throw error;
+                }
+            }
         }
+        
         await addChatToDatabase(bot, callbackQuery);
     } catch (error) {
         console.error('Ошибка при добавлении чата в базу данных:', error.message);
