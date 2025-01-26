@@ -17,151 +17,150 @@ export async function handlePrivateNftChats(bot) {
 
         bot.on('chat_join_request', async (joinRequest) => {
             console.log(`Получен запрос от пользователя ${joinRequest?.from?.id || 'неизвестный'} для чата ${joinRequest?.chat?.id || 'неизвестный'}`);
-        
+            
             if (!joinRequest || !joinRequest.chat || !joinRequest.from) {
-                console.log('Пустой или некорректный запрос, пропускаем.');
+                console.log('Некорректный запрос на присоединение к чату.');
                 return;
             }
-        
+
             const chatId = joinRequest.chat.id;
             const userId = joinRequest.from.id;
-        
-            const chatDoc = privateNftChats.find((c) => c.chatId === chatId.toString());
+
+            const chatDoc = await Chat.findOne({ chatId });
             if (!chatDoc) {
-                console.log(`Чат ${chatId} не найден среди приватных NFT-чатов, запрос игнорируется.`);
-                return;
-            }
-        
-            const walletAddress = await getWalletAddressByUserId(userId);
-        
-            if (!walletAddress) {
+                console.log(`Чат с chatId ${chatId} не найден.`);
                 await bot.declineChatJoinRequest(chatId, userId);
-                console.log(`Пользователь ${userId} отклонён: кошелёк не найден.`);
                 return;
             }
-        
-            console.log(`Пользователь ${userId}, кошелёк: ${walletAddress}`);
-        
+
+            const walletAddress = await getWalletAddressByUserId(userId);
+
+            if (!walletAddress) {
+                console.log(`Кошелек пользователя ${userId} не найден. Запрос отклонён.`);
+                await bot.declineChatJoinRequest(chatId, userId);
+                return;
+            }
+
+            console.log(`Пользователь ${userId}, кошелек: ${walletAddress}`);
+
             const userNfts = await getNftBalance(walletAddress, chatDoc.nft.collectionAddress);
             const userNftCount = userNfts.length;
-        
-            console.log(`Количество NFT пользователя ${userId}: ${userNftCount}, требуемое количество: ${chatDoc.nft.nftRequirement}`);
-        
+
+            console.log(`Количество NFT пользователя ${userId}: ${userNftCount}, требуется: ${chatDoc.nft.nftRequirement}`);
+
             if (userNftCount >= chatDoc.nft.nftRequirement) {
                 await bot.approveChatJoinRequest(chatId, userId);
 
-                const updateResult = await Chat.findOneAndUpdate(
-                    { _id: chatDoc._id },
-                    { $addToSet: { members: userId.toString() } },
-                    { new: true } // Возвращает обновленный документ
-                );
-                console.log('Результат обновления members:', updateResult);
+                try {
+                    await Chat.updateOne(
+                        { chatId },
+                        { $pull: { members: userId.toString() } }
+                    );
 
-                if (updateResult.modifiedCount > 0) {
-                    console.log(`Пользователь ${userId} успешно добавлен в members для чата ${chatId}.`);
-                } else {
-                    console.error(`Не удалось добавить пользователя ${userId} в members для чата ${chatId}.`);
+                    const updateResult = await Chat.updateOne(
+                        { chatId },
+                        { $push: { members: userId.toString() } }
+                    );
+
+                    if (updateResult.modifiedCount > 0) {
+                        console.log(`✅ Пользователь ${userId} добавлен в members чата ${chatId}.`);
+                    } else {
+                        console.error(`❌ Не удалось добавить пользователя ${userId} в members чата ${chatId}.`);
+                    }
+                } catch (error) {
+                    console.error(`Ошибка при обновлении members для чата ${chatId}:`, error.message);
                 }
-        
-                await bot.sendMessage(
-                    chatId,
-                    `🎉 Добро пожаловать, ${joinRequest.from.first_name}, в наш приватный чат!`,
-                );
+
+                await bot.sendMessage(chatId, `🎉 Добро пожаловать, ${joinRequest.from.first_name}, в наш приватный чат!`);
             } else {
-                await bot.declineChatJoinRequest(chatId, userId);
                 console.log(`Пользователь ${userId} отклонён: количество NFT (${userNftCount}) меньше требуемого (${chatDoc.nft.nftRequirement}).`);
+                await bot.declineChatJoinRequest(chatId, userId);
             }
         });
 
         setInterval(async () => {
-            console.log('Запущена проверка всех чатов с NFT.');
-        
+            console.log('Запущена проверка всех NFT-чатов.');
+
             for (const chat of privateNftChats) {
                 const chatId = chat.chatId;
-        
+
                 console.log(`Проверяем чат ${chatId}`);
-        
+
                 if (!chat.nft || !chat.nft.collectionAddress) {
                     console.log(`Пропускаем чат ${chatId}: нет данных о коллекции NFT.`);
                     continue;
                 }
-        
+
                 const currentMembers = await Chat.findOne({ chatId }).select('members').lean();
-        
+
                 if (!currentMembers || !currentMembers.members.length) {
                     console.log(`Нет участников для проверки в чате ${chatId}.`);
                     continue;
                 }
-        
+
                 for (const memberId of currentMembers.members) {
                     console.log(`Проверяем участника ${memberId} в чате ${chatId}`);
-        
+
                     try {
                         const walletAddress = await getWalletAddressByUserId(memberId);
-        
+
                         if (!walletAddress) {
                             console.log(`У участника ${memberId} нет кошелька. Удаляем из чата.`);
                             await bot.banChatMember(chatId, memberId);
                             await bot.unbanChatMember(chatId, memberId);
+
                             const updateResult = await Chat.updateOne(
-                                { _id: chat._id },
-                                { $pull: { members: memberId } }
+                                { chatId },
+                                { $pull: { members: memberId.toString() } }
                             );
 
                             if (updateResult.modifiedCount > 0) {
-                                console.log(`Участник ${memberId} успешно удалён из members для чата ${chatId}.`);
+                                console.log(`Участник ${memberId} успешно удалён из members чата ${chatId}.`);
                             } else {
-                                console.error(`Не удалось удалить участника ${memberId} из members для чата ${chatId}.`);
+                                console.error(`❌ Не удалось удалить участника ${memberId} из members чата ${chatId}.`);
                             }
                             continue;
                         }
-        
+
                         const userNfts = await getNftBalance(walletAddress, chat.nft.collectionAddress);
                         const userNftCount = userNfts.length;
-        
-                        console.log(`Количество NFT участника ${memberId}: ${userNftCount}, требуемое: ${chat.nft.nftRequirement}`);
-        
+
+                        console.log(`NFT участника ${memberId}: ${userNftCount}, требуется: ${chat.nft.nftRequirement}`);
+
                         if (userNftCount < chat.nft.nftRequirement) {
                             console.log(`У участника ${memberId} недостаточно NFT. Удаляем из чата.`);
                             await bot.banChatMember(chatId, memberId);
                             await bot.unbanChatMember(chatId, memberId);
+
                             const updateResult = await Chat.updateOne(
-                                { _id: chat._id },
-                                { $pull: { members: memberId } }
+                                { chatId },
+                                { $pull: { members: memberId.toString() } }
                             );
 
                             if (updateResult.modifiedCount > 0) {
-                                console.log(`Участник ${memberId} успешно удалён из members для чата ${chatId}.`);
+                                console.log(`Участник ${memberId} успешно удалён из members чата ${chatId}.`);
                             } else {
-                                console.error(`Не удалось удалить участника ${memberId} из members для чата ${chatId}.`);
+                                console.error(`❌ Не удалось удалить участника ${memberId} из members чата ${chatId}.`);
                             }
-                        } else {
-                            console.log(`У участника ${memberId} достаточно NFT (${userNftCount} >= ${chat.nft.nftRequirement}).`);
                         }
-                    } catch (err) {
-                        console.error(`Ошибка при проверке участника ${memberId} в чате ${chatId}:`, err.message);
+                    } catch (error) {
+                        console.error(`Ошибка при проверке участника ${memberId}:`, error.message);
 
-                        if (err.message.includes('USER_NOT_PARTICIPANT')) {
-                            console.log(`Участник ${memberId} уже не состоит в чате. Удаляем из базы.`);
-                            const updateResult = await Chat.updateOne(
-                                { _id: chat._id },
-                                { $pull: { members: memberId } }
+                        if (error.message.includes('USER_NOT_PARTICIPANT')) {
+                            console.log(`Участник ${memberId} не состоит в чате. Удаляем из базы.`);
+                            await Chat.updateOne(
+                                { chatId },
+                                { $pull: { members: memberId.toString() } }
                             );
-
-                            if (updateResult.modifiedCount > 0) {
-                                console.log(`Участник ${memberId} успешно удалён из members в базе данных.`);
-                            } else {
-                                console.error(`Не удалось удалить участника ${memberId} из базы данных.`);
-                            }
                         }
                     }
-                    await delay(2750); 
+                    await delay(2750);
                 }
-                await delay(3750); 
+                await delay(3750);
             }
-        
+
             console.log('Проверка всех чатов завершена.');
-        }, 28800000); // 8 часов
+        }, 28800000); 
     } catch (error) {
         console.error('Ошибка в handlePrivateNftChats:', error.message);
     }
