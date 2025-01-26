@@ -13,7 +13,7 @@ export let coreMedia = {
     }
 };
 export let admins = [];
-export let listingManager = '';
+export let listingManager = ''
 
 export async function loadAdminData() {
     try {
@@ -34,7 +34,7 @@ export async function loadAdminData() {
                 },
             };
             admins = adminData.adminsList;
-            listingManager = adminData.listingManager;
+            listingManager = adminData.listingManager
 
             console.log('Админ данные успешно загружены.');
         } else {

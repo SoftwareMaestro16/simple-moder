@@ -140,7 +140,7 @@ export async function handlePrivateJettonChats(bot) {
             }
         
             console.log('Проверка всех чатов завершена.');
-        }, 10800000);
+        }, 25000); // 10800000
     } catch (error) {
         console.error('Ошибка в handlePrivateJettonChats:', error.message);
     }

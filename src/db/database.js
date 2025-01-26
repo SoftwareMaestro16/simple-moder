@@ -5,10 +5,7 @@ const dbConnect = process.env.DB_CONNECT;
 
 async function connectToDatabase() {
   try {
-    await mongoose.connect(dbConnect, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(dbConnect);
     console.log('Connected to MongoDB');
   } catch (err) {
     console.error('Connection error: ', err);
