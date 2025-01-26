@@ -554,6 +554,40 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
     }
 }
 
+export async function handleUserChats(bot, chatId, messageId) {
+    try {
+        const userChats = await getUserChats(chatId);
+
+        if (!userChats.length) {
+            await bot.editMessageText(
+                '❌ У вас пока нет созданных чатов.',
+                {
+                    chat_id: chatId,
+                    message_id: messageId,
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '« Назад', callback_data: 'Menu' }]],
+                    },
+                }
+            );
+            return;
+        }
+
+        const keyboard = generateUserChatsKeyboard(userChats);
+
+        const totalUserChats = userChats.length;
+        const messageText = `📋 <b>Ваши чаты:</b>\n\nВыберите один из чатов ниже:\n\n<b>Всего чатов:</b> ${totalUserChats}`;
+
+        await bot.editMessageText(messageText, {
+            chat_id: chatId,
+            message_id: messageId,
+            parse_mode: 'HTML',
+            reply_markup: keyboard,
+        });
+    } catch (error) {
+        console.error('Ошибка в handleUserChats:', error.message);
+    }
+}
+
 export async function handleUserChatInfo(bot, callbackData, chatId, messageId) {
     try {
         const parts = callbackData.split('_'); 
