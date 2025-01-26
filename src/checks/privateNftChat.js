@@ -53,7 +53,7 @@ export async function handlePrivateNftChats(bot) {
                     await bot.approveChatJoinRequest(chatId, userId);
                 } catch (error) {
                     if (error.response && error.response.body && error.response.body.description.includes('USER_ALREADY_PARTICIPANT')) {
-                        console.log(`Пользователь ${userIdNum} уже состоит в чате ${chatIdNum}.`);
+                        console.log(`Пользователь ${userId} уже состоит в чате ${chatId}.`);
                     } else {
                         console.error(`Ошибка при одобрении запроса пользователя ${userIdNum}:`, error.message);
                     }
