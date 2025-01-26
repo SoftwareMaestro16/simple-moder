@@ -6,7 +6,6 @@ import { handlePublicChats } from './checks/publicChat.js';
 import connectToDatabase from './db/database.js';
 import { registerCommands } from './interactions/commands.js';
 import { registerCallbackQueries } from './interactions/menu.js';
-import express from 'express';
 
 async function main() {
     try {
@@ -39,15 +38,3 @@ async function main() {
 
 main();
 
-
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.get('/', (req, res) => {
-  res.send('Hello, Heroku!');
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
