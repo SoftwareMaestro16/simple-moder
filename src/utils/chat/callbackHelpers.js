@@ -67,6 +67,10 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
     }, 10 * 60 * 1000);
 
     const listener = bot.on('message', async (message) => {
+        if (message.chat.type !== 'private') {
+            return;
+        }
+
         if (message.chat.id !== chatId) return;
 
         clearTimeout(timeout);
@@ -116,6 +120,10 @@ export async function handleNFTSelection(bot, chatId, messageId, callbackData) {
     }, 10 * 60 * 1000);
 
     const listener = bot.on('message', async (message) => {
+        if (message.chat.type !== 'private') {
+            return;
+        }
+
         if (message.chat.id !== chatId) return;
 
         clearTimeout(timeout);
