@@ -35,8 +35,8 @@ export async function handlePublicChats(bot) {
                 }
 
                 const chat = publicChats.find((c) => c.chatId === chatId.toString());
-                if (!chat || !chat.jetton || !chat.jetton.jettonAddress) {
-                    console.log(`Чат ${chatId} не найден в списке публичных чатов или не настроен для проверки Jetton.`);
+                if (!chat || chat.type !== 'public' || !chat.jetton || !chat.jetton.jettonAddress) {
+                    console.log(`Чат ${chatId} не найден в списке публичных чатов, не публичный, или не настроен для проверки Jetton.`);
                     return;
                 }
 

@@ -25,19 +25,19 @@ export async function addChatToDatabase(bot, callbackQuery) {
                 try {
                     await bot.deleteMessage(chatId, bot.context.lastMessageId);
                 } catch (error) {
-                    console.error('Ошибка при удалении предыдущего сообщения:', error.message);
+                    if (error.response?.error_code === 400) {
+                        console.warn('⚠️ Сообщение уже удалено:', error.message);
+                    } else {
+                        throw error;
+                    }
                 }
             }
 
-            await bot.sendMessage(
-                chatId,
-                `❌ Чат с ID ${chatInfo.id} уже добавлен в базу данных!`
-            );
+            await bot.sendMessage(chatId, `❌ Чат с ID ${chatInfo.id} уже добавлен в базу данных!`);
             return;
         }
 
         const isCombo = Boolean(jetton && nft);
-
         let jettonSymbol = jetton?.symbol || 'N/A';
         let nftName = nft?.name || 'Название отсутствует';
 
@@ -56,18 +56,6 @@ export async function addChatToDatabase(bot, callbackQuery) {
                 nftName = collectionData?.name || nftName;
             } catch (error) {
                 console.error('Ошибка получения данных коллекции:', error.message);
-            }
-        }
-
-        if (isCombo) {
-            if (jetton?.address) {
-                const jettonData = await getJettonData(jetton.address);
-                jettonSymbol = jettonData.symbol || jettonSymbol;
-            }
-
-            if (nft?.address) {
-                const collectionData = await getCollectionData(nft.address);
-                nftName = collectionData.name || nftName;
             }
         }
 
@@ -96,9 +84,22 @@ export async function addChatToDatabase(bot, callbackQuery) {
 
         await newChat.save();
 
+        if (bot.context.lastMessageId) {
+            try {
+                await bot.deleteMessage(chatId, bot.context.lastMessageId);
+                bot.context.lastMessageId = null;
+            } catch (error) {
+                if (error.response?.error_code === 400) {
+                    console.warn('⚠️ Сообщение уже удалено:', error.message);
+                } else {
+                    throw error;
+                }
+            }
+        }
+
         const keyboard = await generteReturnMainKeyboard();
         await bot.sendMessage(chatId, '✅ Чат успешно добавлен!', {
-            reply_markup: keyboard
+            reply_markup: keyboard,
         });
     } catch (error) {
         console.error('Ошибка при добавлении чата в базу данных:', error.message);

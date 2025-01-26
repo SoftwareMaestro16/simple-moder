@@ -50,20 +50,31 @@ export async function handlePrivateJettonChats(bot) {
         
             if (userBalance >= chatDoc.jetton.jettonRequirement) {
                 await bot.approveChatJoinRequest(chatId, userId);
-                await Chat.updateOne(
-                    { _id: chatDoc._id },
-                    { $addToSet: { members: userId.toString() } }
-                );
-        
-                // console.log(`Пользователь ${userId} одобрен в чат ${chatId}. Баланс: ${userBalance}`);
-        
+            
+                try {
+                    console.log(`✅ Пользователь ${userId} прошёл проверку баланса (${userBalance} >= ${chatDoc.jetton.jettonRequirement}).`);
+            
+                    const updateResult = await Chat.updateOne(
+                        { _id: chatDoc._id },
+                        { $addToSet: { members: userId.toString() } }
+                    );
+            
+                    if (updateResult.modifiedCount > 0) {
+                        console.log(`✅ Пользователь ${userId} успешно добавлен в members для чата ${chatId}.`);
+                    } else {
+                        console.error(`❌ Пользователь ${userId} не был добавлен в members. Проверьте данные в базе.`);
+                    }
+                } catch (updateError) {
+                    console.error(`Ошибка при обновлении members для чата ${chatId}:`, updateError.message);
+                }
+            
                 await bot.sendMessage(
                     chatId,
                     `🎉 Добро пожаловать, ${joinRequest.from.first_name}, в наш приватный чат!`,
                 );
             } else {
                 await bot.declineChatJoinRequest(chatId, userId);
-                // console.log(`Пользователь ${userId} отклонён: баланс ${userBalance} меньше требуемого ${chatDoc.jetton.jettonRequirement}`);
+                console.log(`❌ Пользователь ${userId} отклонён: баланс ${userBalance} меньше требуемого ${chatDoc.jetton.jettonRequirement}.`);
             }
         });
 
@@ -101,7 +112,7 @@ export async function handlePrivateJettonChats(bot) {
                             await bot.unbanChatMember(chatId, memberId);
                             await Chat.updateOne(
                                 { _id: chat._id },
-                                { $pull: { members: memberId } } 
+                                { $pull: { members: memberId.toString() } } 
                             );
                             continue;
                         }
@@ -120,7 +131,7 @@ export async function handlePrivateJettonChats(bot) {
                             await bot.unbanChatMember(chatId, memberId); 
                             await Chat.updateOne(
                                 { _id: chat._id },
-                                { $pull: { members: memberId } } 
+                                { $pull: { members: memberId.toString() } } 
                             );
                         }
                     } catch (err) {
@@ -130,7 +141,7 @@ export async function handlePrivateJettonChats(bot) {
                             // console.log(`Участник ${memberId} уже не состоит в чате. Удаляем из массива.`);
                             await Chat.updateOne(
                                 { _id: chat._id },
-                                { $pull: { members: memberId } }
+                                { $pull: { members: memberId.toString() } }
                             );
                         }
                     }
