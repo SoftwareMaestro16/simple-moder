@@ -66,14 +66,21 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
         await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
     }, 10 * 60 * 1000);
 
-    bot.once('message', async (message) => {
+    const listener = bot.on('message', async (message) => {
+        if (message.chat.id !== chatId) return;
+
         clearTimeout(timeout);
 
         const amount = parseFloat(message.text);
-        if (isNaN(amount)) {
-            await bot.sendMessage(chatId, '❌ Некорректное количество. Попробуйте снова.');
+        if (isNaN(amount) || amount <= 0) {
+            await bot.sendMessage(
+                chatId,
+                '❌ Некорректное количество. Пожалуйста, введите число больше нуля.'
+            );
             return;
         }
+
+        bot.removeListener('message', listener);
 
         bot.context.jetton.amount = amount;
 
@@ -108,14 +115,18 @@ export async function handleNFTSelection(bot, chatId, messageId, callbackData) {
         await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
     }, 10 * 60 * 1000);
 
-    bot.once('message', async (message) => {
+    const listener = bot.on('message', async (message) => {
+        if (message.chat.id !== chatId) return;
+
         clearTimeout(timeout);
 
         const amount = parseFloat(message.text);
-        if (isNaN(amount)) {
-            await bot.sendMessage(chatId, '❌ Некорректное количество. Попробуйте снова.');
+        if (isNaN(amount) || amount <= 0) {
+            await bot.sendMessage(chatId, '❌ Некорректное количество. Пожалуйста, введите число больше нуля.');
             return;
         }
+
+        bot.removeListener('message', listener);
 
         bot.context.nft.amount = amount;
         await finalizeSetup(bot, chatId);
