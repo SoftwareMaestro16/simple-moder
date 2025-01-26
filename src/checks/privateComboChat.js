@@ -26,7 +26,7 @@ export async function handleComboChats(bot) {
             const chatDoc = await Chat.findOne({ chatId: chatIdNum.toString() });
             if (!chatDoc) {
                 console.log(`Чат ${chatIdNum} не найден среди combo-чатов.`);
-                await bot.declineChatJoinRequest(chatIdNum, userIdNum);
+                // await bot.declineChatJoinRequest(chatIdNum, userIdNum);
                 return;
             }
 
@@ -34,7 +34,7 @@ export async function handleComboChats(bot) {
                 const walletAddress = await getWalletAddressByUserId(userIdNum.toString());
                 if (!walletAddress) {
                     console.log(`Кошелёк не найден для пользователя ${userIdNum}. Отклоняем запрос.`);
-                    await bot.declineChatJoinRequest(chatIdNum, userIdNum);
+                    // await bot.declineChatJoinRequest(chatIdNum, userIdNum);
                     return;
                 }
 
@@ -73,11 +73,11 @@ export async function handleComboChats(bot) {
                     );
                 } else {
                     console.log(`Пользователь ${userIdNum} не соответствует требованиям. Отклоняем запрос.`);
-                    await bot.declineChatJoinRequest(chatIdNum, userIdNum);
+                    // await bot.declineChatJoinRequest(chatIdNum, userIdNum);
                 }
             } catch (error) {
                 console.error(`Ошибка при проверке пользователя ${userIdNum} для чата ${chatIdNum}:`, error.message);
-                await bot.declineChatJoinRequest(chatIdNum, userIdNum);
+                // await bot.declineChatJoinRequest(chatIdNum, userIdNum);
             }
         });
 

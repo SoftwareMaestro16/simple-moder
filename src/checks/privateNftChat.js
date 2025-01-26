@@ -29,7 +29,7 @@ export async function handlePrivateNftChats(bot) {
             const chatDoc = await Chat.findOne({ chatId });
             if (!chatDoc) {
                 console.log(`Чат с chatId ${chatId} не найден.`);
-                await bot.declineChatJoinRequest(chatId, userId);
+                // await bot.declineChatJoinRequest(chatId, userId);
                 return;
             }
 
@@ -37,7 +37,7 @@ export async function handlePrivateNftChats(bot) {
 
             if (!walletAddress) {
                 console.log(`Кошелек пользователя ${userId} не найден. Запрос отклонён.`);
-                await bot.declineChatJoinRequest(chatId, userId);
+                // await bot.declineChatJoinRequest(chatId, userId);
                 return;
             }
 
@@ -74,7 +74,7 @@ export async function handlePrivateNftChats(bot) {
                 await bot.sendMessage(chatId, `🎉 Добро пожаловать, ${joinRequest.from.first_name}, в наш приватный чат!`);
             } else {
                 console.log(`Пользователь ${userId} отклонён: количество NFT (${userNftCount}) меньше требуемого (${chatDoc.nft.nftRequirement}).`);
-                await bot.declineChatJoinRequest(chatId, userId);
+                // await bot.declineChatJoinRequest(chatId, userId);
             }
         });
 

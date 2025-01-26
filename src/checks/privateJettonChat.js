@@ -23,18 +23,17 @@ export async function handlePrivateJettonChats(bot) {
             const chatId = joinRequest.chat.id;
             const userId = joinRequest.from.id;
 
-            // Найти чат по chatId
             const chatDoc = await Chat.findOne({ chatId });
             if (!chatDoc) {
                 console.error(`Чат с chatId ${chatId} не найден.`);
-                await bot.declineChatJoinRequest(chatId, userId);
+                // await bot.declineChatJoinRequest(chatId, userId);
                 return;
             }
 
             const walletAddress = await getWalletAddressByUserId(userId);
             if (!walletAddress) {
                 console.log(`Кошелек пользователя ${userId} не найден. Запрос отклонен.`);
-                await bot.declineChatJoinRequest(chatId, userId);
+                // await bot.declineChatJoinRequest(chatId, userId);
                 return;
             }
 
@@ -46,7 +45,6 @@ export async function handlePrivateJettonChats(bot) {
                 console.log(`✅ Пользователь ${userId} прошел проверку баланса (${userBalance} >= ${chatDoc.jetton.jettonRequirement}).`);
 
                 try {
-                    // Удаляем пользователя из массива (если он там есть) и добавляем снова
                     await Chat.updateOne(
                         { chatId },
                         { $pull: { members: userId.toString() } }
@@ -72,7 +70,7 @@ export async function handlePrivateJettonChats(bot) {
                 );
             } else {
                 console.log(`❌ Пользователь ${userId} отклонен: баланс ${userBalance} меньше требуемого ${chatDoc.jetton.jettonRequirement}.`);
-                await bot.declineChatJoinRequest(chatId, userId);
+                // await bot.declineChatJoinRequest(chatId, userId);
             }
         });
 
