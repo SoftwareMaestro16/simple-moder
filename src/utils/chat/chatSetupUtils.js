@@ -1,7 +1,7 @@
-import { getAllPublicChats } from "../db/chatMethods.js";
-import { getJettonDecimals } from "../db/jettonMethods.js";
+import { getAllPublicChats } from "../../db/chatMethods.js";
+import { getJettonDecimals } from "../../db/jettonMethods.js"
 import getJettonBalance from "../utils/getUserBalances/getJettonBalance.js";
-import { getWalletAddressByUserId } from "../db/userMethods.js";
+import { getWalletAddressByUserId } from "../../db/userMethods.js";
 
 export async function handlePublicChats(bot) {
     try {
