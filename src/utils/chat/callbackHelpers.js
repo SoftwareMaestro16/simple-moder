@@ -59,16 +59,19 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
         if (error.response?.error_code === 400) {
             await bot.sendMessage(chatId, '❌ Произошла ошибка: чат не найден.');
         }
-        return; 
+        return;
     }
 
+    const timeout = setTimeout(async () => {
+        await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
+    }, 10 * 60 * 1000);
+
     bot.once('message', async (message) => {
+        clearTimeout(timeout);
+
         const amount = parseFloat(message.text);
         if (isNaN(amount)) {
-            await bot.sendMessage(
-                chatId,
-                '❌ Некорректное количество. Попробуйте снова.'
-            );
+            await bot.sendMessage(chatId, '❌ Некорректное количество. Попробуйте снова.');
             return;
         }
 
@@ -100,12 +103,20 @@ export async function handleNFTSelection(bot, chatId, messageId, callbackData) {
     });
 
     bot.context.lastMessageId = newMessage.message_id;
+
+    const timeout = setTimeout(async () => {
+        await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
+    }, 10 * 60 * 1000);
+
     bot.once('message', async (message) => {
+        clearTimeout(timeout);
+
         const amount = parseFloat(message.text);
         if (isNaN(amount)) {
             await bot.sendMessage(chatId, '❌ Некорректное количество. Попробуйте снова.');
             return;
         }
+
         bot.context.nft.amount = amount;
         await finalizeSetup(bot, chatId);
     });
