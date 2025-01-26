@@ -1,109 +1,139 @@
-import { addChatToDatabase } from "../../db/chatMethods.js";
-import { generteReturnMainKeyboard } from "../../interactions/keyboard.js";
+import { getAllPublicChats } from "../db/chatMethods.js";
+import { getJettonDecimals } from "../db/jettonMethods.js";
+import getJettonBalance from "../utils/getUserBalances/getJettonBalance.js";
+import { getWalletAddressByUserId } from "../db/userMethods.js";
 
-export async function finalizeSetup(bot, chatId) {
-    const { chatInfo = {}, jetton = {}, nft = {}, typeOfChat = 'N/A' } = bot.context;
+export async function handlePublicChats(bot) {
+    try {
+        const publicChats = await getAllPublicChats();
 
-    if (typeOfChat === 'private') {
-        try {
-            const newInviteLinkObj = await bot.createChatInviteLink(chatInfo.id, {
-                name: 'SimpleModer RequestLink',
-                creates_join_request: true,
-            });
-            chatInfo.invite_link = newInviteLinkObj.invite_link;
-
-            // console.log(`✅ Создана ссылка с заявкой на вступление для чат ${chatInfo.id}:\n`, chatInfo.invite_link);
-        } catch (error) {
-            console.error('❌ Не удалось создать ссылку с заявкой на вступление:', error.message);
+        if (!publicChats.length) {
+            console.log('Нет публичных чатов для обработки.');
+            return;
         }
-    } else {
-        console.log(`⚠️ Либо chatInfo.type !== 'supergroup', либо typeOfChat !== 'private'. Ссылка с заявкой не создаётся.`);
-    }
 
-    const resultMessage = generateResultMessage(chatInfo, jetton, nft, typeOfChat);
-    const sentMessage = await bot.sendMessage(chatId, resultMessage, {
-        parse_mode: 'HTML',
-        reply_markup: generateFinalizeKeyboard(),
-    });
+        console.log(`Обнаружено публичных чатов: ${publicChats.length}`);
 
-    bot.context.lastMessageId = sentMessage.message_id;
+        bot.on('message', async (msg) => {
+            try {
+                console.log(`Получено сообщение в чате ${msg.chat.id} от пользователя ${msg.from.id}`);
+                const chatId = msg.chat.id;
 
-    bot.on('callback_query', async (callbackQuery) => {
-        const callbackData = callbackQuery.data;
+                if (msg.chat.type === 'private') {
+                    console.log('Пропущено сообщение из личного чата.');
+                    return;
+                }
 
-        try {
-            if (callbackData === 'AddChatToDB') {
-                await handleAddChat(bot, chatId, callbackQuery);
-            } else if (callbackData === 'Reject') {
-                await handleRejectSetup(bot, chatId);
+                if (msg.new_chat_members || msg.left_chat_member || msg.pinned_message) {
+                    console.log(`Системное сообщение в чате ${chatId} пропущено.`);
+                    return;
+                }
+
+                if (msg.sender_chat) {
+                    console.log(`Сообщение от канала (ID: ${msg.sender_chat.id}) пропущено.`);
+                    return;
+                }
+
+                const chat = publicChats.find((c) => c.chatId === chatId.toString());
+                if (!chat || !chat.jetton || !chat.jetton.jettonAddress) {
+                    console.log(`Чат ${chatId} не найден в списке публичных чатов или не настроен для проверки Jetton.`);
+                    return;
+                }
+
+                const userId = msg.from.id;
+
+                const isAdmin = await bot
+                    .getChatMember(chatId, userId)
+                    .then((member) => ['administrator', 'creator'].includes(member.status))
+                    .catch((err) => {
+                        console.error(`Ошибка проверки администратора для пользователя ${userId} в чате ${chatId}: ${err.message}`);
+                        return false;
+                    });
+
+                if (isAdmin) {
+                    console.log(`Пользователь ${userId} является администратором в чате ${chatId}, проверка пропущена.`);
+                    return;
+                }
+
+                try {
+                    const walletAddress = await getWalletAddressByUserId(userId);
+                    let userBalance = 0;
+
+                    if (walletAddress) {
+                        console.log(`Кошелек пользователя ${userId}: ${walletAddress}`);
+                        const decimals = await getJettonDecimals(chat.jetton.jettonAddress);
+                        userBalance = await getJettonBalance(
+                            walletAddress,
+                            chat.jetton.jettonAddress,
+                            decimals
+                        );
+                        console.log(`Баланс пользователя ${userId} для Jetton ${chat.jetton.symbol}: ${userBalance}`);
+
+                        if (userBalance < chat.jetton.jettonRequirement) {
+                            console.log(`Недостаточный баланс у пользователя ${userId} в чате ${chatId}.`);
+                            await muteUser(bot, chatId, userId, msg.message_id, chat.jetton);
+                        }
+                    } else {
+                        console.log(`Кошелек пользователя ${userId} не найден.`);
+                        await muteUser(bot, chatId, userId, msg.message_id, chat.jetton, true);
+                    }
+                } catch (error) {
+                    console.error(`Ошибка при проверке пользователя ${userId} в чате ${chatId}:`, error.message);
+                }
+            } catch (msgError) {
+                console.error('Ошибка обработки сообщения:', msgError.message);
             }
-        } catch (error) {
-            console.error('Ошибка при обработке callback-запроса:', error.message);
-            await bot.sendMessage(chatId, '❌ Произошла ошибка. Попробуйте снова.');
-        }
-    });
-}
-
-function generateResultMessage(chatInfo, jetton, nft, typeOfChat) {
-    let message = `<b>Настройка завершена!</b>\n\n` +
-        `<b>Чат:</b> ${chatInfo?.title || 'N/A'}\n` +
-        `<b>ID:</b> ${chatInfo?.id || 'N/A'}\n` +
-        `<b>Ссылка:</b> ${chatInfo?.invite_link || 'Отсутствует'}\n` +
-        `<b>Тип чата:</b> ${typeOfChat}\n`
-
-    if (Object.keys(jetton).length > 0) {
-        message += `<b>Jetton:</b>\n` +
-            `- Адрес: ${jetton.address || 'N/A'}\n` +
-            `- Порог: ${jetton.amount || 'N/A'}\n\n`;
-    }
-
-    if (Object.keys(nft).length > 0) {
-        message += `<b>NFT:</b>\n` +
-            `- Адрес: ${nft.address || 'N/A'}\n` +
-            `- Порог: ${nft.amount || 'N/A'}\n\n`;
-    }
-
-    message += `Для добавления чата нажмите кнопку ниже.`;
-
-    return message;
-}
-
-function generateFinalizeKeyboard() {
-    return {
-        inline_keyboard: [
-            [
-                { text: '✅ Добавить', callback_data: 'AddChatToDB' },
-                { text: 'Отменить ❌', callback_data: 'Reject' },
-            ],
-        ],
-    };
-}
-
-async function handleAddChat(bot, chatId, callbackQuery) {
-    try {
-        if (bot.context.lastMessageId) {
-            await bot.deleteMessage(chatId, bot.context.lastMessageId);
-            bot.context.lastMessageId = null;
-        }
-        await addChatToDatabase(bot, callbackQuery);
-    } catch (error) {
-        console.error('Ошибка при добавлении чата в базу данных:', error.message);
-    }
-}
-
-async function handleRejectSetup(bot, chatId) {
-    try {
-        if (bot.context.lastMessageId) {
-            await bot.deleteMessage(chatId, bot.context.lastMessageId);
-            bot.context.lastMessageId = null;
-        }
-        bot.context = {}; 
-
-        const keyboard = await generteReturnMainKeyboard();
-        await bot.sendMessage(chatId, '❌ Настройка чата отменена.', {
-            reply_markup: keyboard
         });
+
+        console.log('Обработчик сообщений для публичных чатов зарегистрирован.');
     } catch (error) {
-        console.error('Ошибка при отмене настройки:', error.message);
+        console.error('Ошибка в handlePublicChats:', error.message);
     }
+}
+
+async function muteUser(bot, chatId, userId, messageId, jetton, noWallet = false) {
+    try {
+        console.log(`Попытка удалить сообщение пользователя ${userId} в чате ${chatId}.`);
+        await bot.deleteMessage(chatId, messageId);
+    } catch (deleteError) {
+        console.warn(`Не удалось удалить сообщение пользователя ${userId}: ${deleteError.message}`);
+    }
+
+    const muteUntil = Math.floor(Date.now() / 1000) + 60;
+    console.log(`Ограничение отправки сообщений для пользователя ${userId} в чате ${chatId} на 60 секунд.`);
+    await bot.restrictChatMember(chatId, userId, {
+        can_send_messages: false,
+        until_date: muteUntil,
+    });
+
+    const warningMessage = noWallet
+        ? `
+⚠️ Чтобы писать в этом чате, вам необходимо подключить кошелек и иметь на балансе: <b>${jetton.jettonRequirement} $${jetton.symbol}</b>
+        `
+        : `
+⚠️ Чтобы писать в этом чате, вам необходимо иметь на балансе: <b>${jetton.jettonRequirement} $${jetton.symbol}</b>
+        `;
+
+    const botMessage = await bot.sendMessage(chatId, warningMessage, {
+        parse_mode: 'HTML',
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: '🤖 Перейти в Бота 💸',
+                        url: 'https://t.me/simple_moder_bot',
+                    },
+                ],
+            ],
+        },
+    });
+
+    setTimeout(async () => {
+        try {
+            await bot.deleteMessage(chatId, botMessage.message_id);
+            console.log(`Сообщение бота в чате ${chatId} удалено через 12 секунд.`);
+        } catch (deleteError) {
+            console.warn(`Не удалось удалить сообщение бота в чате ${chatId}: ${deleteError.message}`);
+        }
+    }, 12000);
 }

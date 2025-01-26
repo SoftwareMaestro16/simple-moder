@@ -386,6 +386,12 @@ export async function handlePrivateChatSetup(bot, chatId, messageId) {
             }, 10 * 60 * 1000);
 
             bot.once('message', async (message) => {
+                if (message.chat.type !== 'private') {
+                    console.log(`Сообщение из чата ${message.chat.id} пропущено, так как это не личный чат.`);
+                    waitForMessage();
+                    return;
+                }
+
                 clearTimeout(timeoutId);
 
                 const chatIdInput = message.text;
@@ -475,6 +481,12 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
             }, 10 * 60 * 1000);
 
             bot.once('message', async (message) => {
+                if (message.chat.type !== 'private') {
+                    console.log(`Сообщение из чата ${message.chat.id} пропущено, так как это не личный чат.`);
+                    waitForMessage();
+                    return;
+                }
+
                 clearTimeout(timeoutId);
 
                 const chatIdInput = message.text;
