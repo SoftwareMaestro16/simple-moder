@@ -59,32 +59,18 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
         if (error.response?.error_code === 400) {
             await bot.sendMessage(chatId, '❌ Произошла ошибка: чат не найден.');
         }
-        return;
+        return; 
     }
 
-    const timeout = setTimeout(async () => {
-        await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
-    }, 10 * 60 * 1000);
-
-    const listener = bot.on('message', async (message) => {
-        if (message.chat.type !== 'private') {
-            return;
-        }
-
-        if (message.chat.id !== chatId) return;
-
-        clearTimeout(timeout);
-
+    bot.once('message', async (message) => {
         const amount = parseFloat(message.text);
-        if (isNaN(amount) || amount <= 0) {
+        if (isNaN(amount)) {
             await bot.sendMessage(
                 chatId,
-                '❌ Некорректное количество. Пожалуйста, введите число больше нуля.'
+                '❌ Некорректное количество. Попробуйте снова.'
             );
             return;
         }
-
-        bot.removeListener('message', listener);
 
         bot.context.jetton.amount = amount;
 
@@ -114,28 +100,12 @@ export async function handleNFTSelection(bot, chatId, messageId, callbackData) {
     });
 
     bot.context.lastMessageId = newMessage.message_id;
-
-    const timeout = setTimeout(async () => {
-        await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
-    }, 10 * 60 * 1000);
-
-    const listener = bot.on('message', async (message) => {
-        if (message.chat.type !== 'private') {
-            return;
-        }
-
-        if (message.chat.id !== chatId) return;
-
-        clearTimeout(timeout);
-
+    bot.once('message', async (message) => {
         const amount = parseFloat(message.text);
-        if (isNaN(amount) || amount <= 0) {
-            await bot.sendMessage(chatId, '❌ Некорректное количество. Пожалуйста, введите число больше нуля.');
+        if (isNaN(amount)) {
+            await bot.sendMessage(chatId, '❌ Некорректное количество. Попробуйте снова.');
             return;
         }
-
-        bot.removeListener('message', listener);
-
         bot.context.nft.amount = amount;
         await finalizeSetup(bot, chatId);
     });
