@@ -171,7 +171,7 @@ export async function handleComboChats(bot) {
             }
 
             // console.log('Проверка всех combo-чатов завершена.\n');
-        }, 25000); // 18000000
+        }, 18000000); // 18000000
     } catch (error) {
         console.error('Ошибка в handleComboChats:', error.message);
     }
