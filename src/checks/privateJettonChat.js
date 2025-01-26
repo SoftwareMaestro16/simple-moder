@@ -1,3 +1,10 @@
+import Chat from '../models/Chat.js';
+import { getJettonDecimals } from '../db/jettonMethods.js';
+import getJettonBalance from '../utils/getUserBalances/getJettonBalance.js';
+import { getWalletAddressByUserId } from '../db/userMethods.js';
+import { getAllPrivateJettonChats } from '../db/chatMethods.js';
+import { delay } from '../utils/defay.js';
+
 export async function handlePrivateJettonChats(bot) {
     try {
         const privateJettonChats = await getAllPrivateJettonChats();
