@@ -50,31 +50,30 @@ export async function handleComboChats(bot) {
                     nftBalance >= chatDoc.nft.nftRequirement
                 ) {
                     console.log(`Пользователь ${userIdNum} соответствует требованиям. Одобряем запрос.`);
-        
+                    // Одобряем запрос
                     await bot.approveChatJoinRequest(chatIdNum, userIdNum);
-        
+                    // Добавляем пользователя в members
                     const updateResult = await Chat.updateOne(
                         { chatId: chatIdNum.toString() },
                         { $push: { members: userIdNum.toString() } }
                     );
-        
+                
                     if (updateResult.modifiedCount > 0) {
                         console.log(`✅ Пользователь ${userIdNum} добавлен в members чата ${chatIdNum}.`);
                     } else {
                         console.error(`❌ Не удалось добавить пользователя ${userIdNum} в members чата ${chatIdNum}.`);
                     }
-        
+                
                     await bot.sendMessage(
                         chatIdNum,
                         `🎉 Добро пожаловать, ${joinRequest.from.first_name || 'новый участник'}, в наш приватный чат!`
                     );
                 } else {
                     console.log(`Пользователь ${userIdNum} не соответствует требованиям. Отклоняем запрос.`);
-                    // await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос
+                    await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос
                 }
             } catch (error) {
                 console.error(`Ошибка при проверке пользователя ${userIdNum} для чата ${chatIdNum}:`, error.message);
-                await bot.declineChatJoinRequest({chat_id: chatIdNum, user_id:userIdNum}); // Отклоняем запрос
             }
         });
 
