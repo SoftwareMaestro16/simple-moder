@@ -88,7 +88,6 @@ async function handleAddChat(bot, chatId, callbackQuery) {
         await addChatToDatabase(bot, callbackQuery);
     } catch (error) {
         console.error('Ошибка при добавлении чата в базу данных:', error.message);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка при добавлении чата.');
     }
 }
 
@@ -106,6 +105,5 @@ async function handleRejectSetup(bot, chatId) {
         });
     } catch (error) {
         console.error('Ошибка при отмене настройки:', error.message);
-        await bot.sendMessage(chatId, '❌ Произошла ошибка при отмене настройки.');
     }
 }
