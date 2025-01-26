@@ -1,6 +1,6 @@
 export function getShortAddress(address) {
     if (!address || typeof address !== 'string') {
-        console.error('Invalid address provided:', address);
+        // console.error('Invalid address provided:', address);
         return 'Не подключен'; 
     }
     

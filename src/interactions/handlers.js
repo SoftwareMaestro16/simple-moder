@@ -121,7 +121,7 @@ export async function handleWalletConnection(bot, chatId, walletName, messageId)
             const userFriendlyAddress = toUserFriendlyAddress(wallet.account.address);
   
             if (!userFriendlyAddress) {
-                console.error('Invalid wallet address detected.');
+                // console.error('Invalid wallet address detected.');
                 return;
             }
   
