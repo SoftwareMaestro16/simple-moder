@@ -49,8 +49,15 @@ export async function handlePrivateNftChats(bot) {
             console.log(`Количество NFT пользователя ${userId}: ${userNftCount}, требуется: ${chatDoc.nft.nftRequirement}`);
 
             if (userNftCount >= chatDoc.nft.nftRequirement) {
-                await bot.approveChatJoinRequest(chatId, userId);
-
+                try {
+                    await bot.approveChatJoinRequest(chatId, userId);
+                } catch (error) {
+                    if (error.response && error.response.body && error.response.body.description.includes('USER_ALREADY_PARTICIPANT')) {
+                        console.log(`Пользователь ${userIdNum} уже состоит в чате ${chatIdNum}.`);
+                    } else {
+                        console.error(`Ошибка при одобрении запроса пользователя ${userIdNum}:`, error.message);
+                    }
+                }
                 try {
                     await Chat.updateOne(
                         { chatId },

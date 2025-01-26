@@ -41,7 +41,15 @@ export async function handlePrivateJettonChats(bot) {
             const userBalance = await getJettonBalance(walletAddress, chatDoc.jetton.jettonAddress, decimals);
 
             if (userBalance >= chatDoc.jetton.jettonRequirement) {
-                await bot.approveChatJoinRequest(chatId, userId);
+                try {
+                    await bot.approveChatJoinRequest(chatId, userId);
+                } catch (error) {
+                    if (error.response && error.response.body && error.response.body.description.includes('USER_ALREADY_PARTICIPANT')) {
+                        console.log(`Пользователь ${userIdNum} уже состоит в чате ${chatIdNum}.`);
+                    } else {
+                        console.error(`Ошибка при одобрении запроса пользователя ${userIdNum}:`, error.message);
+                    }
+                }
                 console.log(`✅ Пользователь ${userId} прошел проверку баланса (${userBalance} >= ${chatDoc.jetton.jettonRequirement}).`);
 
                 try {

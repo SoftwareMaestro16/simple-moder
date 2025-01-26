@@ -49,8 +49,15 @@ export async function handleComboChats(bot) {
                     nftBalance >= chatDoc.nft.nftRequirement
                 ) {
                     console.log(`Пользователь ${userIdNum} соответствует требованиям. Одобряем запрос.`);
-                    await bot.approveChatJoinRequest(chatIdNum, userIdNum);
-
+                    try {
+                        await bot.approveChatJoinRequest(chatIdNum, userIdNum);
+                    } catch (error) {
+                        if (error.response && error.response.body && error.response.body.description.includes('USER_ALREADY_PARTICIPANT')) {
+                            console.log(`Пользователь ${userIdNum} уже состоит в чате ${chatIdNum}.`);
+                        } else {
+                            console.error(`Ошибка при одобрении запроса пользователя ${userIdNum}:`, error.message);
+                        }
+                    }
                     await Chat.updateOne(
                         { chatId: chatIdNum.toString() },
                         { $pull: { members: userIdNum.toString() } }
