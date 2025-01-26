@@ -70,7 +70,7 @@ export async function handleComboChats(bot) {
                     );
                 } else {
                     console.log(`Пользователь ${userIdNum} не соответствует требованиям. Отклоняем запрос.`);
-                    await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос
+                    // await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос
                 }
             } catch (error) {
                 console.error(`Ошибка при проверке пользователя ${userIdNum} для чата ${chatIdNum}:`, error.message);
