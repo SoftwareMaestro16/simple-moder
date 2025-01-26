@@ -289,9 +289,9 @@ export function generateChoosePrivateChatCategoryKeyboard() {
                 { text: 'Jetton', callback_data: 'SelectJetton' },
                 { text: 'NFT', callback_data: 'SelectNFT' },
             ],
-            // [
-            //     { text: 'Jetton + NFT', callback_data: 'SelectJettonNFT' }
-            // ],
+            [
+                { text: 'Jetton + NFT', callback_data: 'SelectJettonNFT' }
+            ],
             [
                 { text: '📋 Меню', callback_data: 'Menu' }
             ],
