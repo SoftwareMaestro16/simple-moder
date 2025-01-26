@@ -20,71 +20,61 @@ export async function handleComboChats(bot) {
         bot.on('chat_join_request', async (joinRequest) => {
             const chatIdNum = joinRequest.chat.id;
             const userIdNum = joinRequest.from.id;
-
+        
             console.log(`Запрос на вступление от пользователя ${userIdNum} в чат ${chatIdNum}`);
-
+        
             const chatDoc = await Chat.findOne({ chatId: chatIdNum.toString() });
             if (!chatDoc) {
                 console.log(`Чат ${chatIdNum} не найден среди combo-чатов.`);
-                // await bot.declineChatJoinRequest(chatIdNum, userIdNum);
+                await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос
                 return;
             }
-
+        
             try {
                 const walletAddress = await getWalletAddressByUserId(userIdNum.toString());
                 if (!walletAddress) {
                     console.log(`Кошелёк не найден для пользователя ${userIdNum}. Отклоняем запрос.`);
-                    // await bot.declineChatJoinRequest(chatIdNum, userIdNum);
+                    await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос
                     return;
                 }
-
+        
                 const jettonDecimals = await getJettonDecimals(chatDoc.jetton.jettonAddress);
                 const jettonBalance = await getJettonBalance(walletAddress, chatDoc.jetton.jettonAddress, jettonDecimals);
                 const nftBalance = (await getNftBalance(walletAddress, chatDoc.nft.collectionAddress)).length;
-
+        
                 console.log(`Баланс пользователя ${userIdNum}: Jetton: ${jettonBalance}, NFT: ${nftBalance}`);
-
+        
+                // Проверка условий
                 if (
                     jettonBalance >= chatDoc.jetton.jettonRequirement &&
                     nftBalance >= chatDoc.nft.nftRequirement
                 ) {
                     console.log(`Пользователь ${userIdNum} соответствует требованиям. Одобряем запрос.`);
-                    try {
-                        await bot.approveChatJoinRequest(chatIdNum, userIdNum);
-                    } catch (error) {
-                        if (error.response && error.response.body && error.response.body.description.includes('USER_ALREADY_PARTICIPANT')) {
-                            console.log(`Пользователь ${userIdNum} уже состоит в чате ${chatIdNum}.`);
-                        } else {
-                            console.error(`Ошибка при одобрении запроса пользователя ${userIdNum}:`, error.message);
-                        }
-                    }
-                    await Chat.updateOne(
-                        { chatId: chatIdNum.toString() },
-                        { $pull: { members: userIdNum.toString() } }
-                    );
-
+        
+                    await bot.approveChatJoinRequest(chatIdNum, userIdNum);
+        
                     const updateResult = await Chat.updateOne(
                         { chatId: chatIdNum.toString() },
                         { $push: { members: userIdNum.toString() } }
                     );
-
+        
                     if (updateResult.modifiedCount > 0) {
                         console.log(`✅ Пользователь ${userIdNum} добавлен в members чата ${chatIdNum}.`);
                     } else {
                         console.error(`❌ Не удалось добавить пользователя ${userIdNum} в members чата ${chatIdNum}.`);
                     }
-
+        
                     await bot.sendMessage(
                         chatIdNum,
                         `🎉 Добро пожаловать, ${joinRequest.from.first_name || 'новый участник'}, в наш приватный чат!`
                     );
                 } else {
                     console.log(`Пользователь ${userIdNum} не соответствует требованиям. Отклоняем запрос.`);
-                    // await bot.declineChatJoinRequest(chatIdNum, userIdNum);
+                    await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос
                 }
             } catch (error) {
                 console.error(`Ошибка при проверке пользователя ${userIdNum} для чата ${chatIdNum}:`, error.message);
-                // await bot.declineChatJoinRequest(chatIdNum, userIdNum);
+                await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос при ошибке
             }
         });
 
