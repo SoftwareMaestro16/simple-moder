@@ -12,7 +12,7 @@ export async function finalizeSetup(bot, chatId) {
             });
             chatInfo.invite_link = newInviteLinkObj.invite_link;
 
-            console.log(`✅ Создана ссылка с заявкой на вступление для чат ${chatInfo.id}:\n`, chatInfo.invite_link);
+            // console.log(`✅ Создана ссылка с заявкой на вступление для чат ${chatInfo.id}:\n`, chatInfo.invite_link);
         } catch (error) {
             console.error('❌ Не удалось создать ссылку с заявкой на вступление:', error.message);
         }
@@ -28,7 +28,7 @@ export async function finalizeSetup(bot, chatId) {
 
     bot.context.lastMessageId = sentMessage.message_id;
 
-    bot.once('callback_query', async (callbackQuery) => {
+    bot.on('callback_query', async (callbackQuery) => {
         const callbackData = callbackQuery.data;
 
         try {

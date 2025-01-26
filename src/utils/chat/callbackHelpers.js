@@ -62,7 +62,7 @@ export async function handleJettonSelection(bot, chatId, messageId, callbackData
         return; 
     }
 
-    bot.once('message', async (message) => {
+    bot.on('message', async (message) => {
         const amount = parseFloat(message.text);
         if (isNaN(amount)) {
             await bot.sendMessage(
@@ -100,7 +100,7 @@ export async function handleNFTSelection(bot, chatId, messageId, callbackData) {
     });
 
     bot.context.lastMessageId = newMessage.message_id;
-    bot.once('message', async (message) => {
+    bot.on('message', async (message) => {
         const amount = parseFloat(message.text);
         if (isNaN(amount)) {
             await bot.sendMessage(chatId, '❌ Некорректное количество. Попробуйте снова.');

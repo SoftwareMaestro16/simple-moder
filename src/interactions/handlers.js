@@ -380,7 +380,7 @@ export async function handlePrivateChatSetup(bot, chatId, messageId) {
 
         const typeOfChat = 'private';
 
-        bot.once('message', async (message) => {
+        bot.on('message', async (message) => {
             const chatIdInput = message.text;
 
             if (!/^-?\d+$/.test(chatIdInput)) {
@@ -455,7 +455,7 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
 
         const typeOfChat = 'public';
 
-        bot.once('message', async (message) => {
+        bot.on('message', async (message) => {
             const chatIdInput = message.text;
 
             if (!/^-?\d+$/.test(chatIdInput)) {
