@@ -380,7 +380,14 @@ export async function handlePrivateChatSetup(bot, chatId, messageId) {
 
         const typeOfChat = 'private';
 
-        bot.on('message', async (message) => {
+        const timeout = 10 * 60 * 1000; 
+        const timeoutId = setTimeout(async () => {
+            await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
+        }, timeout);
+
+        bot.once('message', async (message) => {
+            clearTimeout(timeoutId); 
+
             const chatIdInput = message.text;
 
             if (!/^-?\d+$/.test(chatIdInput)) {
@@ -455,7 +462,14 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
 
         const typeOfChat = 'public';
 
-        bot.on('message', async (message) => {
+        const timeout = 10 * 60 * 1000; 
+        const timeoutId = setTimeout(async () => {
+            await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
+        }, timeout);
+
+        bot.once('message', async (message) => {
+            clearTimeout(timeoutId); 
+
             const chatIdInput = message.text;
 
             if (!/^-?\d+$/.test(chatIdInput)) {
@@ -523,7 +537,6 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
         console.error('Ошибка в handlePublicChatSetup:', error);
     }
 }
-
 export async function handleUserChats(bot, chatId, messageId) {
     try {
         const userChats = await getUserChats(chatId);
