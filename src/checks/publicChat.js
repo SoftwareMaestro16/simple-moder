@@ -20,7 +20,6 @@ export async function handlePublicChats(bot) {
                 const chatId = msg.chat.id;
 
                 if (msg.chat.type === 'private') {
-                    console.log('Пропущено сообщение из личного чата.');
                     return;
                 }
 
@@ -48,7 +47,6 @@ export async function handlePublicChats(bot) {
                     .catch(() => false);
 
                 if (isAdmin) {
-                    console.log(`Пользователь ${userId} является администратором в чате ${chatId}, проверка пропущена.`);
                     return;
                 }
 
@@ -57,14 +55,14 @@ export async function handlePublicChats(bot) {
                     let userBalance = 0;
 
                     if (walletAddress) {
-                        console.log(`Кошелек пользователя ${userId}: ${walletAddress}`);
+                        // console.log(`Кошелек пользователя ${userId}: ${walletAddress}`);
                         const decimals = await getJettonDecimals(chat.jetton.jettonAddress);
                         userBalance = await getJettonBalance(
                             walletAddress,
                             chat.jetton.jettonAddress,
                             decimals
                         );
-                        console.log(`Баланс пользователя ${userId} для Jetton ${chat.jetton.symbol}: ${userBalance}`);
+                        // console.log(`Баланс пользователя ${userId} для Jetton ${chat.jetton.symbol}: ${userBalance}`);
 
                         if (userBalance < chat.jetton.jettonRequirement) {
                             console.log(`Недостаточный баланс у пользователя ${userId} в чате ${chatId}.`);
@@ -97,7 +95,7 @@ async function muteUser(bot, chatId, userId, messageId, jetton, noWallet = false
     }
 
     const muteUntil = Math.floor(Date.now() / 1000) + 60;
-    console.log(`Ограничение отправки сообщений для пользователя ${userId} в чате ${chatId} на 60 секунд.`);
+    // console.log(`Ограничение отправки сообщений для пользователя ${userId} в чате ${chatId} на 60 секунд.`);
     await bot.restrictChatMember(chatId, userId, {
         can_send_messages: false,
         until_date: muteUntil,
@@ -128,7 +126,7 @@ async function muteUser(bot, chatId, userId, messageId, jetton, noWallet = false
     setTimeout(async () => {
         try {
             await bot.deleteMessage(chatId, botMessage.message_id);
-            console.log(`Сообщение бота в чате ${chatId} удалено через 12 секунд.`);
+            // console.log(`Сообщение бота в чате ${chatId} удалено через 12 секунд.`);
         } catch (deleteError) {
             console.warn(`Не удалось удалить сообщение бота в чате ${chatId}: ${deleteError.message}`);
         }
