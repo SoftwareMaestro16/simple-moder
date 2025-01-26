@@ -74,7 +74,7 @@ export async function handleComboChats(bot) {
                 }
             } catch (error) {
                 console.error(`Ошибка при проверке пользователя ${userIdNum} для чата ${chatIdNum}:`, error.message);
-                await bot.declineChatJoinRequest(chatIdNum, userIdNum); // Отклоняем запрос при ошибке
+                await bot.declineChatJoinRequest({chat_id: chatIdNum, user_id:userIdNum}); // Отклоняем запрос
             }
         });
 
