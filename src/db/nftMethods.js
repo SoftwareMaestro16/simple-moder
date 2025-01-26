@@ -11,13 +11,11 @@ export async function addNFT(address, name) {
 
         const existingNFT = await NFT.findOne({ address });
         if (existingNFT) {
-            console.log(`Collection с Address ${address} уже существует.`);
             return existingNFT;
         }
 
         const newNFT = new NFT({ address, name });
         await newNFT.save();
-        console.log(`Collection ${name} успешно добавлен.`);
         return newNFT;
     } catch (error) {
         console.error('Ошибка при добавлении Collection:', error);
@@ -33,10 +31,8 @@ export async function deleteNFT(address) {
 
         const deletedNFT = await NFT.findOneAndDelete({ address });
         if (deletedNFT) {
-            console.log(`Collection с Address ${address} успешно удален.`);
             return deletedNFT;
         } else {
-            console.log(`Collection с Address ${address} не найден.`);
             return null;
         }
     } catch (error) {

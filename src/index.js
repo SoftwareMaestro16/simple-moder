@@ -20,7 +20,7 @@ async function main() {
         }
 
         await connectToDatabase();
-        console.log('Подключение к базе данных успешно.');
+        // console.log('Подключение к базе данных успешно.');
         await registerCallbackQueries(bot);
 
         registerCommands(bot);

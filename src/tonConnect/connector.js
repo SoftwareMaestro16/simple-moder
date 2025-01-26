@@ -20,7 +20,7 @@ class CustomStorage {
 }
 
 export function getConnector(chatId) {
-  console.log(`Creating connector for chatId: ${chatId}`);
+  // console.log(`Creating connector for chatId: ${chatId}`);
   return new TonConnect({
     manifestUrl: 'https://ton-connect.github.io/demo-dapp-with-react-ui/tonconnect-manifest.json',
     storage: new CustomStorage(),

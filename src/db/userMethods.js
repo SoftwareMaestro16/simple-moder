@@ -11,13 +11,11 @@ export async function addUser(userId, firstName, userName = null) {
 
         const existingUser = await User.findOne({ userId });
         if (existingUser) {
-            console.log(`Пользователь с ID ${userId} уже существует.`);
             return existingUser;
         }
 
         const newUser = new User({ userId, firstName, userName });
         await newUser.save();
-        console.log(`Пользователь ${firstName} успешно добавлен.`);
         return newUser;
     } catch (error) {
         console.error('Ошибка при добавлении пользователя:', error);
@@ -38,7 +36,6 @@ export async function getUserById(userId) {
 export async function getUserByAddress(address) {
     try {
         if (!address) {
-            console.log('Address is null or empty, skipping database lookup.');
             return null;
         }
 
@@ -59,7 +56,6 @@ export async function updateUserAddress(userId, address, walletName) {
 
         const existingUserWithAddress = await getUserByAddress(address);
         if (existingUserWithAddress && existingUserWithAddress.userId !== userId) {
-            console.log(`Кошелек ${address} уже привязан к другому пользователю.`);
             
             const sentMessage = await bot.sendMessage(chatId, `❌ Кошелек ${address} уже привязан к другому пользователю.`, {
                 parse_mode: 'HTML'
@@ -85,7 +81,6 @@ export async function updateUserAddress(userId, address, walletName) {
         user.appWalletName = walletName;
 
         await user.save();
-        console.log(`Пользователь ${userId} успешно обновлен.`);
         return user;
     } catch (error) {
         console.error('Ошибка при обновлении пользователя:', error);
@@ -107,7 +102,6 @@ export async function getWalletAddressByUserId(userId) {
     try {
         const user = await User.findOne({ userId }); 
         if (!user || !user.walletAddress) {
-            console.log(`Пользователь с ID ${userId} не найден или адрес кошелька отсутствует.`);
             return null;
         }
         return user.walletAddress; 

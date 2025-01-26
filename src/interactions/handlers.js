@@ -80,7 +80,7 @@ export async function handleDisconnectWallet(bot, chatId, messageId) {
         user.appWalletName = null;
 
         await user.save();
-        console.log(`Кошелек пользователя с ID ${chatId} успешно отключен.`);
+        // console.log(`Кошелек пользователя с ID ${chatId} успешно отключен.`);
 
         const keyboard = generateProfileKeyboard('Не Подключен');
 

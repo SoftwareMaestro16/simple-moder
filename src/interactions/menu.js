@@ -83,7 +83,7 @@ export function registerCallbackQueries(bot) {
                 return;
             }
 
-            console.log('Unhandled callback_query:', callbackData);
+            // console.log('Unhandled callback_query:', callbackData);
         } catch (error) {
             console.error('Ошибка обработки callback_query:', error.message);
         }
@@ -100,7 +100,7 @@ export function registerCallbackQueries(bot) {
             } else if (callbackData.startsWith('nft_')) {
                 await handleNFTSelection(bot, chatId, messageId, callbackData);
             } else {
-                console.log('Unhandled callback_query:', callbackData);
+                // console.log('Unhandled callback_query:', callbackData);
             }
         } catch (error) {
             console.error('Ошибка обработки callback_query:', error.message);

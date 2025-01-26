@@ -8,7 +8,7 @@ export async function handlePublicChats(bot) {
         const publicChats = await getAllPublicChats();
 
         if (!publicChats.length) {
-            console.log('Нет публичных чатов для обработки.');
+            // console.log('Нет публичных чатов для обработки.');
             return;
         }
 
@@ -26,12 +26,12 @@ export async function handlePublicChats(bot) {
                 msg.left_chat_member ||
                 msg.pinned_message 
             ) {
-                console.log(`Системное сообщение в чате ${chatId} пропущено.`);
+                // console.log(`Системное сообщение в чате ${chatId} пропущено.`);
                 return;
             }
 
             if (msg.sender_chat) {
-                console.log(`Сообщение от канала (ID: ${msg.sender_chat.id}) пропущено.`);
+                // console.log(`Сообщение от канала (ID: ${msg.sender_chat.id}) пропущено.`);
                 return;
             }
 
@@ -116,7 +116,7 @@ async function muteUser(bot, chatId, userId, messageId, jetton, noWallet = false
     setTimeout(async () => {
         try {
             await bot.deleteMessage(chatId, botMessage.message_id);
-            console.log(`Сообщение бота в чате ${chatId} удалено через 12 секунд.`);
+            // console.log(`Сообщение бота в чате ${chatId} удалено через 12 секунд.`);
         } catch (deleteError) {
             console.warn(`Не удалось удалить сообщение бота в чате ${chatId}: ${deleteError.message}`);
         }

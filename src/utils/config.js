@@ -18,7 +18,6 @@ export let listingManager = ''
 export async function loadAdminData() {
     try {
         const adminData = await getAdminStructure();
-        console.log('Полученные данные:', adminData);
 
         if (adminData) {
             jettonListingPrice = adminData.jettonListingPrice;

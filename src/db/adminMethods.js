@@ -5,11 +5,9 @@ export async function getAdminStructure() {
         const adminData = await Admin.findOne();
 
         if (!adminData) {
-            console.log('Данные администратора не найдены.');
             return null;
         }
 
-        console.log('Данные администратора:', adminData);
         return adminData;
     } catch (error) {
         console.error('Ошибка при получении данных администратора:', error);
@@ -24,13 +22,11 @@ export async function setJettonListingPrice(price) {
         if (!admin) {
             admin = new Admin(); 
             await admin.save(); 
-            console.log('Создана новая запись Admin.');
         }
 
         admin.jettonListingPrice = price;
 
         await admin.save();
-        console.log(`Листинг прайс успешно обновлен.`);
         return admin;
     } catch (error) {
         console.error('Ошибка при обновлении:', error);
@@ -45,13 +41,11 @@ export async function setCollectionListingPrice(price) {
         if (!admin) {
             admin = new Admin(); 
             await admin.save(); 
-            console.log('Создана новая запись Admin.');
         }
 
         admin.nftListingPrice = price;
 
         await admin.save();
-        console.log(`Листинг прайс успешно обновлен.`);
         return admin;
     } catch (error) {
         console.error('Ошибка при обновлении:', error);
@@ -65,17 +59,14 @@ export async function addAdmin(adminId) {
         if (!admin) {
             admin = new Admin(); 
             await admin.save();
-            console.log('Создана новая запись Admin.');
         }
 
         if (admin.adminsList.includes(Number(adminId))) {
-            console.log(`Администратор с ID ${adminId} уже существует.`);
             return null;
         }
 
         admin.adminsList.push(Number(adminId));
         await admin.save();
-        console.log(`Администратор с ID ${adminId} успешно добавлен.`);
         return admin;
     } catch (error) {
         console.error('Ошибка при добавлении администратора:', error);
@@ -87,19 +78,16 @@ export async function removeAdmin(adminId) {
     try {
         let admin = await Admin.findOne({});
         if (!admin) {
-            console.log('Запись Admin не найдена.');
             return null;
         }
 
         const adminIndex = admin.adminsList.indexOf(Number(adminId));
         if (adminIndex === -1) {
-            console.log(`Администратор с ID ${adminId} не найден.`);
             return null;
         }
 
         admin.adminsList.splice(adminIndex, 1);
         await admin.save();
-        console.log(`Администратор с ID ${adminId} успешно удален.`);
         return admin;
     } catch (error) {
         console.error('Ошибка при удалении администратора:', error);
@@ -112,7 +100,6 @@ export async function getAdmins() {
         const admin = await Admin.findOne({});
 
         if (!admin) {
-            console.log('Запись Admin не найдена.');
             return [];
         }
 
@@ -129,7 +116,6 @@ export async function setCoreChannel(channelId, link) {
 
         if (!admin) {
             admin = new Admin();
-            console.log('Создана новая запись Admin.');
         }
 
         admin.coreChannel = {
@@ -138,7 +124,6 @@ export async function setCoreChannel(channelId, link) {
         };
 
         await admin.save();
-        console.log('Core Channel успешно обновлен.');
         return admin;
     } catch (error) {
         console.error('Ошибка при обновлении Core Channel:', error);
@@ -153,7 +138,6 @@ export async function setCoreChat(chatId, link) {
         if (!admin) {
             admin = new Admin(); 
             await admin.save(); 
-            console.log('Создана новая запись Admin.');
         }
 
         admin.coreChat = {
@@ -162,7 +146,6 @@ export async function setCoreChat(chatId, link) {
         }
 
         await admin.save();
-        console.log(`Листинг прайс успешно обновлен.`);
         return admin;
     } catch (error) {
         console.error('Ошибка при обновлении:', error);
@@ -175,7 +158,6 @@ export async function getCoreMedia() {
         const admin = await Admin.findOne({});
 
         if (!admin) {
-            console.log('Запись Admin не найдена.');
             return [];
         }
 
@@ -194,7 +176,6 @@ export async function getTokensListingPrice() {
         const admin = await Admin.findOne({});
 
         if (!admin) {
-            console.log('Запись Admin не найдена.');
             return [];
         }
 
@@ -215,13 +196,11 @@ export async function setListingManager(userLink) {
         if (!admin) {
             admin = new Admin(); 
             await admin.save(); 
-            console.log('Создана новая запись Admin.');
         }
 
         admin.listingManager = userLink;
 
         await admin.save();
-        console.log(`Менеджер обновлен.`);
         return admin;
     } catch (error) {
         console.error('Ошибка при обновлении:', error);
@@ -234,7 +213,6 @@ export async function getListingManager() {
         const admin = await Admin.findOne({});
 
         if (!admin) {
-            console.log('Запись Admin не найдена.');
             return '';
         }
 
