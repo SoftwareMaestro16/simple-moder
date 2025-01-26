@@ -23,6 +23,8 @@ export async function handlePrivateJettonChats(bot) {
             const chatId = joinRequest.chat.id;
             const userId = joinRequest.from.id;
 
+            console.log(`Запрос на присоединение: пользователь ${userId}, чат ${chatId}`);
+
             const chatDoc = await Chat.findOne({ chatId });
             if (!chatDoc) {
                 console.error(`Чат с chatId ${chatId} не найден.`);
@@ -30,13 +32,18 @@ export async function handlePrivateJettonChats(bot) {
             }
 
             if (!chatDoc.jetton || !chatDoc.jetton.jettonAddress) {
-                console.error(`Jetton address is missing for chat ${chatId}.`);
+                console.error(`Jetton address отсутствует для чата ${chatId}.`);
                 return;
             }
 
             const walletAddress = await getWalletAddressByUserId(userId);
             if (!walletAddress) {
                 console.log(`Кошелек пользователя ${userId} не найден. Запрос отклонен.`);
+                try {
+                    await bot.declineChatJoinRequest(chatId, userId);
+                } catch (error) {
+                    console.error(`Ошибка при отклонении запроса пользователя ${userId}:`, error.message);
+                }
                 return;
             }
 
@@ -46,15 +53,14 @@ export async function handlePrivateJettonChats(bot) {
             if (userBalance >= chatDoc.jetton.jettonRequirement) {
                 try {
                     await bot.approveChatJoinRequest(chatId, userId);
+                    console.log(`✅ Пользователь ${userId} одобрен. Баланс: ${userBalance}`);
                 } catch (error) {
                     console.error(`Ошибка при одобрении запроса пользователя ${userId}:`, error.message);
+                    return;
                 }
 
-                console.log(`✅ Пользователь ${userId} прошел проверку баланса (${userBalance} >= ${chatDoc.jetton.jettonRequirement}).`);
-
                 try {
-                    await Chat.updateOne({ chatId }, { $pull: { members: userId.toString() } });
-                    const updateResult = await Chat.updateOne({ chatId }, { $push: { members: userId.toString() } });
+                    const updateResult = await Chat.updateOne({ chatId }, { $addToSet: { members: userId.toString() } });
 
                     if (updateResult.matchedCount === 0) {
                         console.error(`❌ Чат с chatId ${chatId} не найден при добавлении пользователя.`);
@@ -65,9 +71,18 @@ export async function handlePrivateJettonChats(bot) {
                     console.error(`Ошибка при обновлении members для чата ${chatId}:`, updateError.message);
                 }
 
-                await bot.sendMessage(chatId, `🎉 Добро пожаловать, ${joinRequest.from.first_name}, в наш приватный чат!`);
+                try {
+                    await bot.sendMessage(chatId, `🎉 Добро пожаловать, ${joinRequest.from.first_name || 'новый участник'}, в наш приватный чат!`);
+                } catch (sendError) {
+                    console.error(`Ошибка при отправке приветственного сообщения для пользователя ${userId}:`, sendError.message);
+                }
             } else {
-                console.log(`❌ Пользователь ${userId} отклонен: баланс ${userBalance} меньше требуемого ${chatDoc.jetton.jettonRequirement}.`);
+                console.log(`❌ Пользователь ${userId} отклонен: баланс ${userBalance} меньше ${chatDoc.jetton.jettonRequirement}`);
+                try {
+                    await bot.declineChatJoinRequest(chatId, userId);
+                } catch (error) {
+                    console.error(`Ошибка при отклонении запроса пользователя ${userId}:`, error.message);
+                }
             }
         });
 
