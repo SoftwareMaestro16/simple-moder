@@ -51,9 +51,10 @@ export async function handleComboChats(bot) {
                     console.log(`Пользователь ${userIdNum} соответствует требованиям. Одобряем запрос.`);
                     await bot.approveChatJoinRequest(chatIdNum, userIdNum);
 
-                    const updateResult = await Chat.updateOne(
+                    const updateResult = await Chat.findOneAndUpdate(
                         { _id: chatDoc._id },
-                        { $addToSet: { members: userIdNum.toString() } }
+                        { $addToSet: { members: userId.toString() } },
+                        { new: true } // Возвращает обновленный документ
                     );
 
                     if (updateResult.modifiedCount > 0) {

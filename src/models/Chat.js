@@ -17,7 +17,7 @@ const ChatSchema = new mongoose.Schema({
   },
   comboCheck: { type: Boolean, default: false }, // flag combo check
   adminId: { type: String, required: true }, 
-  members: { type: [], default: [] }, // for private
+  members: { type: [String], default: [] }, // for private
  }, {
     timestamps: true
 });

@@ -49,11 +49,12 @@ export async function handlePrivateNftChats(bot) {
         
             if (userNftCount >= chatDoc.nft.nftRequirement) {
                 await bot.approveChatJoinRequest(chatId, userId);
-                const updateResult = await Chat.updateOne(
+
+                const updateResult = await Chat.findOneAndUpdate(
                     { _id: chatDoc._id },
-                    { $addToSet: { members: userId.toString() } }
+                    { $addToSet: { members: userId.toString() } },
+                    { new: true } // Возвращает обновленный документ
                 );
-                
                 console.log('Результат обновления members:', updateResult);
 
                 if (updateResult.modifiedCount > 0) {

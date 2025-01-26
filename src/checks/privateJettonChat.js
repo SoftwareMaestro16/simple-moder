@@ -54,10 +54,13 @@ export async function handlePrivateJettonChats(bot) {
                 try {
                     console.log(`✅ Пользователь ${userId} прошёл проверку баланса (${userBalance} >= ${chatDoc.jetton.jettonRequirement}).`);
             
-                    const updateResult = await Chat.updateOne(
+                    const updateResult = await Chat.findOneAndUpdate(
                         { _id: chatDoc._id },
-                        { $addToSet: { members: userId.toString() } }
+                        { $addToSet: { members: userId.toString() } },
+                        { new: true } // Возвращает обновленный документ
                     );
+                    console.log(updateResult);
+                    
             
                     if (updateResult.modifiedCount > 0) {
                         console.log(`✅ Пользователь ${userId} успешно добавлен в members для чата ${chatId}.`);
