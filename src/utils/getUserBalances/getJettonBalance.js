@@ -15,7 +15,7 @@ async function getJettonBalance(walletAddress, jettonAddress, decimals) {
     } catch (error) {
       if (error.response) {
         if (error.response.status === 404) {
-          console.error('404 Not Found: Jetton or wallet does not exist.');
+          // console.error('404 Not Found: Jetton or wallet does not exist.');
           return 0;
         }
         if (error.response.status === 429) {
