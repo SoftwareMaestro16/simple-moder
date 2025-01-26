@@ -12,7 +12,7 @@ export async function handlePublicChats(bot) {
             return;
         }
 
-        console.log(`Обнаружено публичных чатов: ${publicChats.length}`);
+        // console.log(`Обнаружено публичных чатов: ${publicChats.length}`);
 
         bot.on('message', async (msg) => {
             const chatId = msg.chat.id;
