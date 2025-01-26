@@ -380,68 +380,75 @@ export async function handlePrivateChatSetup(bot, chatId, messageId) {
 
         const typeOfChat = 'private';
 
-        const timeout = 10 * 60 * 1000; 
-        const timeoutId = setTimeout(async () => {
-            await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
-        }, timeout);
+        const waitForMessage = () => {
+            const timeoutId = setTimeout(async () => {
+                await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
+            }, 10 * 60 * 1000);
 
-        bot.once('message', async (message) => {
-            clearTimeout(timeoutId); 
+            bot.once('message', async (message) => {
+                clearTimeout(timeoutId);
 
-            const chatIdInput = message.text;
+                const chatIdInput = message.text;
 
-            if (!/^-?\d+$/.test(chatIdInput)) {
-                await bot.sendMessage(chatId, '❌ Некорректный ID. Попробуйте еще раз.');
-                return;
-            }
-
-            const duplicateChat = await isDuplicateChat(chatIdInput);
-            if (duplicateChat) {
-                await bot.sendMessage(
-                    chatId,
-                    `❌ Чат с ID ${chatIdInput} уже существует в базе данных.\n\n`
-                );
-                return;
-            }
-
-            const chatInfo = await bot.getChat(chatIdInput).catch(() => null);
-
-            if (!chatInfo) {
-                await bot.sendMessage(chatId, '❌ Не удалось получить данные чата. Проверьте ID и права.');
-                return;
-            }
-
-            if (chatInfo.type !== 'group' && chatInfo.type !== 'supergroup') {
-                await bot.sendMessage(
-                    chatId,
-                    '❌ Нельзя добавить чат, который не является группой или супергруппой.'
-                );
-                return;
-            }
-
-            const chatAdmins = await bot.getChatAdministrators(chatIdInput).catch(() => []);
-            const isAdmin = chatAdmins.some((admin) => admin.user.id === message.from.id);
-
-            if (!isAdmin) {
-                await bot.sendMessage(
-                    chatId,
-                    '❌ Вы не являетесь администратором этого чата. Добавление невозможно.'
-                );
-                return;
-            }
-
-            await bot.sendMessage(
-                chatId,
-                `✅ <b>Чат найден!</b>\n\n` +
-                `Теперь выберите категорию для настройки.`,
-                {
-                    parse_mode: 'HTML',
-                    reply_markup: generateChoosePrivateChatCategoryKeyboard(),
+                if (!/^-?\d+$/.test(chatIdInput)) {
+                    await bot.sendMessage(chatId, '❌ Некорректный ID. Попробуйте снова.');
+                    waitForMessage();
+                    return;
                 }
-            );
 
-            bot.context = { chatIdInput, chatInfo, typeOfChat };
-        });
+                const duplicateChat = await isDuplicateChat(chatIdInput);
+                if (duplicateChat) {
+                    await bot.sendMessage(
+                        chatId,
+                        `❌ Чат с ID ${chatIdInput} уже существует в базе данных.\n\n`
+                    );
+                    waitForMessage();
+                    return;
+                }
+
+                const chatInfo = await bot.getChat(chatIdInput).catch(() => null);
+
+                if (!chatInfo) {
+                    await bot.sendMessage(chatId, '❌ Не удалось получить данные чата. Проверьте ID и права.');
+                    waitForMessage();
+                    return;
+                }
+
+                if (chatInfo.type !== 'group' && chatInfo.type !== 'supergroup') {
+                    await bot.sendMessage(
+                        chatId,
+                        '❌ Нельзя добавить чат, который не является группой или супергруппой.'
+                    );
+                    waitForMessage();
+                    return;
+                }
+
+                const chatAdmins = await bot.getChatAdministrators(chatIdInput).catch(() => []);
+                const isAdmin = chatAdmins.some((admin) => admin.user.id === message.from.id);
+
+                if (!isAdmin) {
+                    await bot.sendMessage(
+                        chatId,
+                        '❌ Вы не являетесь администратором этого чата. Добавление невозможно.'
+                    );
+                    waitForMessage();
+                    return;
+                }
+
+                await bot.sendMessage(
+                    chatId,
+                    `✅ <b>Чат найден!</b>\n\nТеперь выберите категорию для настройки.`,
+                    {
+                        parse_mode: 'HTML',
+                        reply_markup: generateChoosePrivateChatCategoryKeyboard(),
+                    }
+                );
+
+                bot.context = { chatIdInput, chatInfo, typeOfChat };
+            });
+        };
+
+        waitForMessage();
     } catch (error) {
         console.error('Ошибка в handlePrivateChatSetup:', error);
     }
@@ -462,81 +469,90 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
 
         const typeOfChat = 'public';
 
-        const timeout = 10 * 60 * 1000; 
-        const timeoutId = setTimeout(async () => {
-            await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
-        }, timeout);
+        const waitForMessage = () => {
+            const timeoutId = setTimeout(async () => {
+                await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова.');
+            }, 10 * 60 * 1000);
 
-        bot.once('message', async (message) => {
-            clearTimeout(timeoutId); 
+            bot.once('message', async (message) => {
+                clearTimeout(timeoutId);
 
-            const chatIdInput = message.text;
+                const chatIdInput = message.text;
 
-            if (!/^-?\d+$/.test(chatIdInput)) {
-                await bot.sendMessage(chatId, '❌ Некорректный ID. Попробуйте еще раз.');
-                return;
-            }
-
-            const duplicateChat = await isDuplicateChat(chatIdInput);
-            if (duplicateChat) {
-                await bot.sendMessage(
-                    chatId,
-                    `❌ Чат с ID ${chatIdInput} уже существует в базе данных.\n\n`
-                );
-                return;
-            }
-
-            const chatInfo = await bot.getChat(chatIdInput).catch(() => null);
-
-            if (!chatInfo) {
-                await bot.sendMessage(chatId, '❌ Не удалось получить данные чата. Проверьте ID и права.');
-                return;
-            }
-
-            if (chatInfo.type !== 'group' && chatInfo.type !== 'supergroup') {
-                await bot.sendMessage(
-                    chatId,
-                    '❌ Нельзя добавить чат, который не является группой или супергруппой.'
-                );
-                return;
-            }
-
-            const chatAdmins = await bot.getChatAdministrators(chatIdInput).catch(() => []);
-            const isAdmin = chatAdmins.some((admin) => admin.user.id === message.from.id);
-
-            if (!isAdmin) {
-                await bot.sendMessage(
-                    chatId,
-                    '❌ Вы не являетесь администратором этого чата. Добавление невозможно.'
-                );
-                return;
-            }
-
-            const jettons = await getAllJettonAddressesAndSymbols();
-
-            if (jettons.length === 0) {
-                await bot.sendMessage(chatId, '❌ В базе данных нет доступных жетонов.');
-                return;
-            }
-
-            const keyboard = generateJettonListForSelectKeyboard(jettons);
-
-            await bot.sendMessage(
-                chatId,
-                `✅ <b>Чат найден!</b>\n\n` +
-                `Теперь выберите жетон для настройки доступа.`,
-                {
-                    parse_mode: 'HTML',
-                    reply_markup: keyboard,
+                if (!/^-?\d+$/.test(chatIdInput)) {
+                    await bot.sendMessage(chatId, '❌ Некорректный ID. Попробуйте снова.');
+                    waitForMessage();
+                    return;
                 }
-            );
 
-            bot.context = { chatIdInput, chatInfo, typeOfChat };
-        });
+                const duplicateChat = await isDuplicateChat(chatIdInput);
+                if (duplicateChat) {
+                    await bot.sendMessage(
+                        chatId,
+                        `❌ Чат с ID ${chatIdInput} уже существует в базе данных.\n\n`
+                    );
+                    waitForMessage();
+                    return;
+                }
+
+                const chatInfo = await bot.getChat(chatIdInput).catch(() => null);
+
+                if (!chatInfo) {
+                    await bot.sendMessage(chatId, '❌ Не удалось получить данные чата. Проверьте ID и права.');
+                    waitForMessage();
+                    return;
+                }
+
+                if (chatInfo.type !== 'group' && chatInfo.type !== 'supergroup') {
+                    await bot.sendMessage(
+                        chatId,
+                        '❌ Нельзя добавить чат, который не является группой или супергруппой.'
+                    );
+                    waitForMessage();
+                    return;
+                }
+
+                const chatAdmins = await bot.getChatAdministrators(chatIdInput).catch(() => []);
+                const isAdmin = chatAdmins.some((admin) => admin.user.id === message.from.id);
+
+                if (!isAdmin) {
+                    await bot.sendMessage(
+                        chatId,
+                        '❌ Вы не являетесь администратором этого чата. Добавление невозможно.'
+                    );
+                    waitForMessage();
+                    return;
+                }
+
+                const jettons = await getAllJettonAddressesAndSymbols();
+
+                if (jettons.length === 0) {
+                    await bot.sendMessage(chatId, '❌ В базе данных нет доступных жетонов.');
+                    waitForMessage();
+                    return;
+                }
+
+                const keyboard = generateJettonListForSelectKeyboard(jettons);
+
+                await bot.sendMessage(
+                    chatId,
+                    `✅ <b>Чат найден!</b>\n\nТеперь выберите жетон для настройки доступа.`,
+                    {
+                        parse_mode: 'HTML',
+                        reply_markup: keyboard,
+                    }
+                );
+
+                bot.context = { chatIdInput, chatInfo, typeOfChat };
+            });
+        };
+
+        waitForMessage();
     } catch (error) {
         console.error('Ошибка в handlePublicChatSetup:', error);
     }
 }
+
 export async function handleUserChats(bot, chatId, messageId) {
     try {
         const userChats = await getUserChats(chatId);
