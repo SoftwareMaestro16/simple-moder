@@ -1,5 +1,5 @@
 import { getUserById } from "../db/userMethods.js";
-import getNftBalance from "../utils/getUserBalances/getNftBalance.js";
+import { getNftBalance } from "../utils/getUserBalances/getNftBalance.js";
 import { delay } from "../utils/defay.js";
 import { getAllPrivateNftChats } from "../db/chatMethods.js";
 import Chat from "../models/Chat.js";
