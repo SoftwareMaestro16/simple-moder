@@ -18,7 +18,7 @@ async function getJettonBalance(walletAddress, jettonAddress, decimals) {
             }
             if (error.response.status === 429) {
                 console.warn('Rate limit exceeded. Retrying in 5 seconds...');
-                await new Promise((resolve) => setTimeout(resolve, 5000)); 
+                await new Promise((resolve) => setTimeout(resolve, 5100)); 
                 return getJettonBalance(walletAddress, jettonAddress, decimals); 
             }
         }

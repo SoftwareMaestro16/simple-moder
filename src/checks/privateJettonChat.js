@@ -1,7 +1,7 @@
 import { getUserById } from "../db/userMethods.js";
 import { getJettonData } from "../utils/getTokensData/getJettonData.js";
 import getJettonBalance from "../utils/getUserBalances/getJettonBalance.js";
-import { delay } from "../utils/defay.js";
+import { delay } from "../utils/delay.js";
 import { getAllPrivateJettonChats } from "../db/chatMethods.js";
 import Chat from "../models/Chat.js";
 
@@ -35,6 +35,8 @@ export async function jettonPrivateChat({ chatId, msg, bot }) {
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, Balance: ${userJettonBalance} ${symbol}`);
 
+        let welcomeMessageSent = false;
+
         if (userJettonBalance >= jettonRequirement) {
             const alreadyInChat = chat.members.includes(userId);
             if (!alreadyInChat) {
@@ -60,9 +62,11 @@ export async function jettonPrivateChat({ chatId, msg, bot }) {
                 }
             }
 
-            if (!alreadyInChat) {
-                await bot.sendMessage(chatId, `🎉 Добро пожаловать, ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`);
+            if (!welcomeMessageSent) { 
+                const welcomeMessage = `🎉 Добро пожаловать, ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`;
+                await bot.sendMessage(chatId, welcomeMessage);
                 console.log(`User ${userId} added to Jetton chat ${chatId}.`);
+                welcomeMessageSent = true;  
             }
         } else {
             console.log(`User ${userId} does not meet the jetton requirement for chat ${chatId}.`);

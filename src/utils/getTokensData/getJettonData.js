@@ -15,7 +15,18 @@ export async function getJettonData(jettonAddress) {
             image,
         };
     } catch (error) {
-        console.error("Error fetching jetton data:", error);
+        if (error.response) {
+            if (error.response.status === 404) {
+                console.error("Jetton not found: 404 error.");
+                throw new Error("Jetton not found");
+            }
+            if (error.response.status === 429) {
+                console.warn("Rate limit exceeded: 429 error. Retrying...");
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                return getJettonData(jettonAddress);  
+            }
+        }
+        console.error("Error fetching jetton data:", error.message);
         throw new Error("Failed to fetch jetton data");
     }
 }

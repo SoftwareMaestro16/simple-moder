@@ -25,9 +25,7 @@ export async function addChatToDatabase(bot, callbackQuery) {
                 try {
                     await bot.deleteMessage(chatId, bot.context.lastMessageId);
                 } catch (error) {
-                    if (error.response?.error_code === 400) {
-                        console.warn('⚠️ Сообщение уже удалено:', error.message);
-                    } else {
+                    if (error.response?.error_code !== 400) {
                         throw error;
                     }
                 }
@@ -89,9 +87,7 @@ export async function addChatToDatabase(bot, callbackQuery) {
                 await bot.deleteMessage(chatId, bot.context.lastMessageId);
                 bot.context.lastMessageId = null;
             } catch (error) {
-                if (error.response?.error_code === 400) {
-                    console.warn('⚠️ Сообщение уже удалено:', error.message);
-                } else {
+                if (error.response?.error_code !== 400) {
                     throw error;
                 }
             }

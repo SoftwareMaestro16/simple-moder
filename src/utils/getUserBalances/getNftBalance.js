@@ -1,5 +1,5 @@
 import axios from "axios";
-import { delay } from "../defay.js";
+import { delay } from "../delay.js";
 
 export async function getNftBalance(walletAddress, collectionAddress) {
     const API_URL = `https://tonapi.io/v2/accounts/${walletAddress}/nfts?collection=${collectionAddress}&limit=1000&offset=0&indirect_ownership=false`;
@@ -16,7 +16,7 @@ export async function getNftBalance(walletAddress, collectionAddress) {
         if (error.response) {
             if (error.response.status === 429) {
                 console.warn('Rate limit exceeded. Retrying...');
-                await delay(5000);
+                await delay(5100);
                 return getNftBalance(walletAddress, collectionAddress); 
             }
 

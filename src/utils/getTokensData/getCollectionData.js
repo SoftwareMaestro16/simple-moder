@@ -15,6 +15,17 @@ export async function getCollectionData(collectionAddress) {
 
         return collectionInfo;
     } catch (error) {
+        if (error.response) {
+            if (error.response.status === 404) {
+                console.error("Collection not found: 404 error.");
+                throw new Error("Collection not found");
+            }
+            if (error.response.status === 429) {
+                console.warn("Rate limit exceeded: 429 error. Retrying...");
+                await new Promise(resolve => setTimeout(resolve, 5000)); 
+                return getCollectionData(collectionAddress);  
+            }
+        }
         console.error(`Ошибка при получении данных коллекции: ${error.message}`);
         throw new Error('Не удалось получить данные коллекции. Проверьте адрес.');
     }

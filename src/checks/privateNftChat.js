@@ -1,6 +1,6 @@
 import { getUserById } from "../db/userMethods.js";
 import { getNftBalance } from "../utils/getUserBalances/getNftBalance.js";
-import { delay } from "../utils/defay.js";
+import { delay } from "../utils/delay.js";
 import { getAllPrivateNftChats } from "../db/chatMethods.js";
 import Chat from "../models/Chat.js";
 
@@ -32,6 +32,8 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, NFT Balance: ${userNftBalance.length} NFTs`);
 
+        let welcomeMessageSent = false;
+
         if (userNftBalance.length >= nftRequirement) {
             const alreadyInChat = chat.members.includes(userId);
             if (!alreadyInChat) {
@@ -57,9 +59,10 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
                 }
             }
 
-            if (!alreadyInChat) {
-                await bot.sendMessage(chatId, `🎉 Добро пожаловать,  ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`);
+            if (!welcomeMessageSent) { 
+                await bot.sendMessage(chatId, `🎉 Добро пожаловать, ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`);
                 console.log(`User ${userId} added to NFT chat ${chatId}.`);
+                welcomeMessageSent = true; 
             }
         } else {
             console.log(`User ${userId} does not meet the NFT requirement for chat ${chatId}.`);

@@ -1,7 +1,7 @@
 import { getUserById } from "../db/userMethods.js";
 import getJettonBalance from "../utils/getUserBalances/getJettonBalance.js";
 import { getNftBalance } from "../utils/getUserBalances/getNftBalance.js";
-import { delay } from "../utils/defay.js";
+import { delay } from "../utils/delay.js";
 import { getJettonData } from "../utils/getTokensData/getJettonData.js"; 
 import Chat from "../models/Chat.js";
 import { getAllComboChats } from "../db/chatMethods.js";
@@ -41,6 +41,8 @@ export async function comboPrivateChat({ chatId, msg, bot }) {
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, Jetton Balance: ${userJettonBalance} ${symbol}, NFT Balance: ${userNftBalance.length} NFTs`);
 
+        let welcomeMessageSent = false; 
+
         if (userJettonBalance >= jettonRequirement && userNftBalance.length >= nftRequirement) {
             await Chat.updateOne(
                 { chatId },
@@ -61,10 +63,14 @@ export async function comboPrivateChat({ chatId, msg, bot }) {
                 } else {
                     console.error('Error handling join request:', error.message);
                 }
-            }            
-            const welcomeMessage = `🎉 Добро пожаловать, ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`;
-            await bot.sendMessage(chatId, welcomeMessage);
-            console.log(`User ${userId} added to Combo chat ${chatId}.`);
+            }
+
+            if (!welcomeMessageSent) { 
+                const welcomeMessage = `🎉 Добро пожаловать, ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`;
+                await bot.sendMessage(chatId, welcomeMessage);
+                console.log(`User ${userId} added to Combo chat ${chatId}.`);
+                welcomeMessageSent = true;  
+            }
         } else {
             console.log(`User ${userId} does not meet the requirements for the Combo chat ${chatId}.`);
         }
