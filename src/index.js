@@ -1,7 +1,8 @@
 import bot from './bot.js';
-import { handleComboChats } from './checks/privateComboChat.js';
-import { handlePrivateJettonChats } from './checks/privateJettonChat.js';
-import { handlePrivateNftChats } from './checks/privateNftChat.js';
+import { handlePrivateChats } from './checks/privateChats.js';
+import { handleMemberUpdatesCombo, startComboChatBalanceChecker } from './checks/privateComboChat.js';
+import { handleMemberUpdatesJetton, startJettonChatBalanceChecker } from './checks/privateJettonChat.js';
+import { handleNftMemberUpdatesNft, startNftChatBalanceChecker } from './checks/privateNftChat.js';
 import { handlePublicChats } from './checks/publicChat.js';
 import connectToDatabase from './db/database.js';
 import { registerCommands } from './interactions/commands.js';
@@ -25,9 +26,16 @@ async function main() {
 
         registerCommands(bot);
         await handlePublicChats(bot);
-        await handlePrivateJettonChats(bot);
-        await handlePrivateNftChats(bot);
-        await handleComboChats(bot);
+        await handlePrivateChats(bot);
+
+        await startJettonChatBalanceChecker(bot);
+        await handleMemberUpdatesJetton(bot);
+
+        await startNftChatBalanceChecker(bot);
+        await handleNftMemberUpdatesNft(bot);
+
+        await startComboChatBalanceChecker(bot);
+        await handleMemberUpdatesCombo(bot);
 
         console.log('Started.');
     } catch (error) {

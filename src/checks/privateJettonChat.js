@@ -1,135 +1,147 @@
-import Chat from '../models/Chat.js';
-import { getJettonDecimals } from '../db/jettonMethods.js';
-import getJettonBalance from '../utils/getUserBalances/getJettonBalance.js';
-import { getWalletAddressByUserId } from '../db/userMethods.js';
-import { getAllPrivateJettonChats } from '../db/chatMethods.js';
-import { delay } from '../utils/defay.js';
+import { getUserById } from "../db/userMethods.js";
+import { getJettonData } from "../utils/getTokensData/getJettonData.js";
+import getJettonBalance from "../utils/getUserBalances/getJettonBalance.js";
+import { delay } from "../utils/defay.js";
+import { getAllPrivateJettonChats } from "../db/chatMethods.js";
+import Chat from "../models/Chat.js";
 
-export async function handlePrivateJettonChats(bot) {
+export async function jettonPrivateChat({ chatId, msg, bot }) {
     try {
-        const privateJettonChats = await getAllPrivateJettonChats();
+        const userId = String(msg.from.id);
+        const user = await getUserById(userId);
 
-        if (!privateJettonChats.length) {
-            console.log('Нет приватных Jetton-чатов для обработки.');
+        if (!user) {
+            console.log(`User with ID ${userId} not found in the database.`);
             return;
         }
 
-        bot.on('chat_join_request', async (joinRequest) => {
-            if (!joinRequest || !joinRequest.chat || !joinRequest.from) {
-                console.error('Некорректный запрос на присоединение к чату.');
-                return;
-            }
+        const walletAddress = user.walletAddress;
+        if (walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
+            console.log(`Wallet address not found for user ID ${userId}.`);
+            return;
+        }
 
-            const chatId = joinRequest.chat.id;
-            const userId = joinRequest.from.id;
+        const chat = await Chat.findOne({ chatId });
+        if (!chat || !chat.jetton || !chat.jetton.jettonAddress) {
+            console.log(`Jetton chat with ID ${chatId} not properly configured.`);
+            return;
+        }
 
-            console.log(`Запрос на присоединение: пользователь ${userId}, чат ${chatId}`);
+        const { jettonAddress, jettonRequirement, symbol } = chat.jetton;
+        const jettonData = await getJettonData(jettonAddress);
+        const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, jettonData.decimals);
 
-            const chatDoc = await Chat.findOne({ chatId });
-            if (!chatDoc) {
-                console.error(`Чат с chatId ${chatId} не найден.`);
-                return;
-            }
+        console.log(`User ID: ${userId}, Wallet: ${walletAddress}, Balance: ${userJettonBalance} ${symbol}`);
 
-            if (!chatDoc.jetton || !chatDoc.jetton.jettonAddress) {
-                console.error(`Jetton address отсутствует для чата ${chatId}.`);
-                return;
-            }
+        if (userJettonBalance >= jettonRequirement) {
+            await Chat.updateOne(
+                { chatId },
+                { $addToSet: { members: userId } } 
+            );
 
-            const walletAddress = await getWalletAddressByUserId(userId);
-            if (!walletAddress) {
-                console.log(`Кошелек пользователя ${userId} не найден. Запрос отклонен.`);
-                try {
-                    await bot.declineChatJoinRequest(chatId, userId);
-                } catch (error) {
-                    console.error(`Ошибка при отклонении запроса пользователя ${userId}:`, error.message);
-                }
-                return;
-            }
+            await bot.approveChatJoinRequest(chatId, userId);
+            await bot.sendMessage(chatId, `🎉 Welcome to the private Jetton chat, ${msg.from.first_name || "User"}!`);
+            console.log(`User ${userId} added to Jetton chat ${chatId}.`);
+        } else {
+            console.log(`User ${userId} does not meet the jetton requirement for chat ${chatId}.`);
+        }
+    } catch (error) {
+        console.error("Error handling jetton chat join request:", error.message);
+    }
+}
 
-            const decimals = await getJettonDecimals(chatDoc.jetton.jettonAddress);
-            const userBalance = await getJettonBalance(walletAddress, chatDoc.jetton.jettonAddress, decimals);
+export async function startJettonChatBalanceChecker(bot) {
+    setInterval(async () => {
+        try {
+            const jettonChats = await getAllPrivateJettonChats();
 
-            if (userBalance >= chatDoc.jetton.jettonRequirement) {
-                try {
-                    await bot.approveChatJoinRequest(chatId, userId);
-                    console.log(`✅ Пользователь ${userId} одобрен. Баланс: ${userBalance}`);
-                } catch (error) {
-                    console.error(`Ошибка при одобрении запроса пользователя ${userId}:`, error.message);
-                    return;
-                }
+            for (const chat of jettonChats) {
+                const { chatId, jetton } = chat;
 
-                try {
-                    const updateResult = await Chat.updateOne({ chatId }, { $addToSet: { members: userId.toString() } });
-
-                    if (updateResult.matchedCount === 0) {
-                        console.error(`❌ Чат с chatId ${chatId} не найден при добавлении пользователя.`);
-                    } else {
-                        console.log(`✅ Пользователь ${userId} добавлен в members для чата ${chatId}.`);
-                    }
-                } catch (updateError) {
-                    console.error(`Ошибка при обновлении members для чата ${chatId}:`, updateError.message);
-                }
-
-                try {
-                    await bot.sendMessage(chatId, `🎉 Добро пожаловать, ${joinRequest.from.first_name || 'новый участник'}, в наш приватный чат!`);
-                } catch (sendError) {
-                    console.error(`Ошибка при отправке приветственного сообщения для пользователя ${userId}:`, sendError.message);
-                }
-            } else {
-                console.log(`❌ Пользователь ${userId} отклонен: баланс ${userBalance} меньше ${chatDoc.jetton.jettonRequirement}`);
-                try {
-                    await bot.declineChatJoinRequest(chatId, userId);
-                } catch (error) {
-                    console.error(`Ошибка при отклонении запроса пользователя ${userId}:`, error.message);
-                }
-            }
-        });
-
-        setInterval(async () => {
-            for (const chat of privateJettonChats) {
-                const chatId = chat.chatId;
-
-                if (!chat.jetton || !chat.jetton.jettonAddress) {
-                    console.log(`Пропускаем чат ${chatId}: нет данных о Jetton.`);
+                if (!jetton || !jetton.jettonAddress || !jetton.jettonRequirement) {
+                    console.log(`Chat ${chatId} is not properly configured for jetton checks.`);
                     continue;
                 }
 
-                const decimals = await getJettonDecimals(chat.jetton.jettonAddress);
-                const currentMembers = await Chat.findOne({ chatId }).select('members').lean();
+                const { jettonAddress, jettonRequirement, decimals = 0 } = jetton;
 
-                if (!currentMembers || !currentMembers.members.length) {
-                    console.log(`Нет участников для проверки в чате ${chatId}.`);
-                    continue;
-                }
-
-                for (const memberId of currentMembers.members) {
+                for (const userId of chat.members) {
                     try {
-                        const walletAddress = await getWalletAddressByUserId(memberId);
-                        if (!walletAddress) {
-                            console.log(`У участника ${memberId} нет кошелька. Удаляем из чата.`);
-                            await bot.banChatMember(chatId, memberId);
-                            await Chat.updateOne({ chatId }, { $pull: { members: memberId.toString() } });
+                        await delay(3000);
+
+                        const user = await getUserById(userId);
+                        if (!user) {
+                            console.log(`User with ID ${userId} not found, removing from chat members.`);
+                            await Chat.updateOne({ chatId }, { $pull: { members: userId } });
                             continue;
                         }
 
-                        const userBalance = await getJettonBalance(walletAddress, chat.jetton.jettonAddress, decimals);
-                        if (userBalance < chat.jetton.jettonRequirement) {
-                            console.log(`Баланс участника ${memberId} недостаточен. Удаляем.`);
-                            await bot.banChatMember(chatId, memberId);
-                            await Chat.updateOne({ chatId }, { $pull: { members: memberId.toString() } });
+                        const walletAddress = user.walletAddress;
+                        if (walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
+                            console.log(`User ${userId} has no wallet address. Removing from members and kicking from chat ${chatId}.`);
+                        
+                            try {
+                                await bot.banChatMember(chatId, userId); 
+                                await bot.unbanChatMember(chatId, userId);
+                            } catch (error) {
+                                console.error(`Error kicking user ${userId} from chat ${chatId}:`, error.message);
+                            }
+                        
+                            try {
+                                await Chat.updateOne({ chatId }, { $pull: { members: userId } });
+                                console.log(`User ${userId} successfully removed from the database.`);
+                            } catch (error) {
+                                console.error(`Error updating database for user ${userId}:`, error.message);
+                            }
+                        
+                            continue; 
                         }
-                    } catch (err) {
-                        console.error(`Ошибка при проверке участника ${memberId} в чате ${chatId}:`, err.message);
+
+                        const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, decimals);
+
+                        console.log(
+                            `Checking user ${userId} in chat ${chatId}: wallet = ${walletAddress}, balance = ${userJettonBalance}, requirement = ${jettonRequirement}`
+                        );
+
+                        if (userJettonBalance < jettonRequirement) {
+                            console.log(`User ${userId} does not meet the jetton requirement for chat ${chatId}. Removing...`);
+                            await bot.banChatMember(chatId, userId); 
+                            await bot.unbanChatMember(chatId, userId); 
+                            await Chat.updateOne({ chatId }, { $pull: { members: userId } }); 
+                        }
+                    } catch (userError) {
+                        console.error(`Error processing user ${userId} in chat ${chatId}:`, userError.message);
                     }
-
-                    await delay(2750);
                 }
-
-                await delay(3750);
             }
-        }, 10800000); // 3 hours
-    } catch (error) {
-        console.error('Ошибка в handlePrivateJettonChats:', error.message);
-    }
+        } catch (error) {
+            console.error("Error during jetton balance checking:", error.message);
+        }
+    }, 30000); 
+}
+
+export async function handleMemberUpdatesJetton(bot) {
+    bot.on("chat_member_left", async (msg) => {
+        const chatId = String(msg.chat.id);
+        const userId = String(msg.from.id);
+
+        try {
+            await Chat.updateOne({ chatId }, { $pull: { members: userId } }); 
+            console.log(`User ${userId} left or was removed from chat ${chatId}.`);
+        } catch (error) {
+            console.error("Error handling member update:", error.message);
+        }
+    });
+
+    bot.on("chat_member_removed", async (msg) => {
+        const chatId = String(msg.chat.id);
+        const userId = String(msg.from.id);
+
+        try {
+            await Chat.updateOne({ chatId }, { $pull: { members: userId } }); 
+            console.log(`User ${userId} was removed from chat ${chatId}.`);
+        } catch (error) {
+            console.error("Error handling member removal:", error.message);
+        }
+    });
 }

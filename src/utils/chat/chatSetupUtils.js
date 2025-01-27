@@ -7,8 +7,9 @@ export async function finalizeSetup(bot, chatId) {
     if (typeOfChat === 'private') {
         try {
             const newInviteLinkObj = await bot.createChatInviteLink(chatInfo.id, {
-                name: 'SimpleModer RequestLink',
+                name: 'SimpleModer RequestLink 1',
                 creates_join_request: true,
+                
             });
             chatInfo.invite_link = newInviteLinkObj.invite_link;
 
