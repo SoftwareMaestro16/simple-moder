@@ -61,7 +61,9 @@ export async function handlePublicChats(bot) {
                     return;
                 }
 
+                await delay(1350); 
                 const { decimals } = await getJettonData(jettonAddress);
+                await delay(1350); 
                 const balance = await getJettonBalance(walletAddress, jettonAddress, decimals);
 
                 if (balance < jettonRequirement) {

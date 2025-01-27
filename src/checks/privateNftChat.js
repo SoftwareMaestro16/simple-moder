@@ -26,6 +26,7 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
             return;
         }
 
+        await delay(1200); 
         const { collectionAddress, nftRequirement } = chat.nft;
         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
@@ -96,6 +97,7 @@ export async function startNftChatBalanceChecker(bot) {
                             continue;
                         }
 
+                        await delay(1200); 
                         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
                         console.log(
