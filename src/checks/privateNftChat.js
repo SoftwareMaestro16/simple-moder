@@ -51,7 +51,6 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
                     
                     await bot.banChatMember(chatId, userId); 
                     await bot.unbanChatMember(chatId, userId); 
-                    await bot.approveChatJoinRequest(chatId, userId);
                     console.log(`User ${userId} re-approved to join the chat ${chatId}.`);
                 } else {
                     console.error('Error handling join request:', error.message);
