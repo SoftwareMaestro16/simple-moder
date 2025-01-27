@@ -2,6 +2,7 @@ import { getAllPublicChats } from "../db/chatMethods.js";
 import { getUserById } from "../db/userMethods.js";
 import { getJettonData } from "../utils/getTokensData/getJettonData.js";
 import getJettonBalance from "../utils/getUserBalances/getJettonBalance.js";
+import { delay } from "../utils/defay.js";
 
 export async function handlePublicChats(bot) {
     try {
@@ -99,6 +100,8 @@ export async function handlePublicChats(bot) {
                         });
                     }, 12000);
                 }
+
+                await delay(5000); 
 
             } catch (error) {
                 console.error('Ошибка при проверке баланса Jetton:', error.message);
