@@ -34,8 +34,15 @@ export async function handlePublicChats(bot) {
                 const walletAddress = user?.walletAddress;
 
                 if (!walletAddress) {
-                    console.log(`Пользователь ${userId} не подключил кошелек. Удаляю сообщение.`);
+                    console.log(`Пользователь ${userId} не подключил кошелек. Удаляю сообщение и мутим.`);
                     await bot.deleteMessage(chatId, msg.message_id).catch(err => console.error('Ошибка при удалении сообщения:', err.message));
+
+                    const muteUntilDate = Math.floor(Date.now() / 1000) + 60; 
+                    await bot.restrictChatMember(chatId, userId, {
+                        until_date: muteUntilDate,  
+                        can_send_messages: false,  
+                    });
+                    console.log(`Пользователь ${userId} был замучен на 1 минуту в чате ${chatId}`);
 
                     const warningMessage = `
 ⚠️ Чтобы писать в этом чате, вам необходимо подключить кошелек и иметь на балансе: <b>${jettonRequirement} $${symbol}</b>
@@ -67,11 +74,19 @@ export async function handlePublicChats(bot) {
                 const balance = await getJettonBalance(walletAddress, jettonAddress, decimals);
 
                 if (balance < jettonRequirement) {
-                    console.log(`Пользователь ${userId} не соответствует требованиям по балансу. Удаляю сообщение.`);
+                    console.log(`Пользователь ${userId} не соответствует требованиям по балансу. Удаляю сообщение и мутим.`);
                     await bot.deleteMessage(chatId, msg.message_id).catch(err => console.error('Ошибка при удалении сообщения:', err.message));
 
+               
+                    const muteUntilDate = Math.floor(Date.now() / 1000) + 60; 
+                    await bot.restrictChatMember(chatId, userId, {
+                        until_date: muteUntilDate, 
+                        can_send_messages: false, 
+                    });
+                    console.log(`Пользователь ${userId} был замучен на 1 минуту в чате ${chatId}`);
+
                     const warningMessage = `
-⚠️ Чтобы писать в этом чате, вам необходимо иметь на балансе: <b>${jettonRequirement} $${symbol}</b> (у вас сейчас: ${balance})
+⚠️ Чтобы писать в этом чате, вам необходимо иметь на балансе: <b>${jettonRequirement} $${symbol}</b>)
                     `;
                     const botMessage = await bot.sendMessage(chatId, warningMessage, {
                         parse_mode: 'HTML',
@@ -92,7 +107,7 @@ export async function handlePublicChats(bot) {
                     }, 12000);
                 }
 
-                await delay(5000); 
+                await delay(3750);
 
             } catch (error) {
                 console.error('Ошибка при проверке баланса Jetton:', error.message);
