@@ -27,9 +27,10 @@ export async function jettonPrivateChat({ chatId, msg, bot }) {
             return;
         }
 
-        await delay(1200); 
+        await delay(1750); 
         const { jettonAddress, jettonRequirement, symbol } = chat.jetton;
         const jettonData = await getJettonData(jettonAddress);
+        await delay(3600); 
         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, jettonData.decimals);
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, Balance: ${userJettonBalance} ${symbol}`);
@@ -40,7 +41,22 @@ export async function jettonPrivateChat({ chatId, msg, bot }) {
                 { $addToSet: { members: userId } } 
             );
 
-            await bot.approveChatJoinRequest(chatId, userId);
+            try {
+                await bot.approveChatJoinRequest(chatId, userId);
+                console.log(`User ${userId} successfully approved to join the chat ${chatId}.`);
+            } catch (error) {
+                if (error.response && error.response.error_code === 400 && error.response.description === "USER_ALREADY_PARTICIPANT") {
+                    console.log(`User ${userId} is already a participant. Removing and re-approving.`);
+                    
+                    await bot.banChatMember(chatId, userId); 
+                    await bot.unbanChatMember(chatId, userId); 
+                    
+                    await bot.approveChatJoinRequest(chatId, userId);
+                    console.log(`User ${userId} re-approved to join the chat ${chatId}.`);
+                } else {
+                    console.error('Error handling join request:', error.message);
+                }
+            }
             await bot.sendMessage(chatId, `🎉 Welcome to the private Jetton chat, ${msg.from.first_name || "User"}!`);
             console.log(`User ${userId} added to Jetton chat ${chatId}.`);
         } else {
@@ -99,7 +115,7 @@ export async function startJettonChatBalanceChecker(bot) {
                             continue; 
                         }
 
-                        await delay(1200); 
+                        await delay(5600); 
                         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, decimals);
 
                         console.log(

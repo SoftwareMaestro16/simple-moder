@@ -26,7 +26,7 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
             return;
         }
 
-        await delay(1200); 
+        await delay(3600); 
         const { collectionAddress, nftRequirement } = chat.nft;
         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
@@ -38,7 +38,22 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
                 { $addToSet: { members: userId } } 
             );
 
-            await bot.approveChatJoinRequest(chatId, userId);
+            try {
+                await bot.approveChatJoinRequest(chatId, userId);
+                console.log(`User ${userId} successfully approved to join the chat ${chatId}.`);
+            } catch (error) {
+                if (error.response && error.response.error_code === 400 && error.response.description === "USER_ALREADY_PARTICIPANT") {
+                    console.log(`User ${userId} is already a participant. Removing and re-approving.`);
+                    
+                    await bot.banChatMember(chatId, userId); 
+                    await bot.unbanChatMember(chatId, userId); 
+                    
+                    await bot.approveChatJoinRequest(chatId, userId);
+                    console.log(`User ${userId} re-approved to join the chat ${chatId}.`);
+                } else {
+                    console.error('Error handling join request:', error.message);
+                }
+            }
             await bot.sendMessage(chatId, `🎉 Welcome to the private NFT chat, ${msg.from.first_name || "User"}!`);
             console.log(`User ${userId} added to NFT chat ${chatId}.`);
         } else {
@@ -97,7 +112,7 @@ export async function startNftChatBalanceChecker(bot) {
                             continue;
                         }
 
-                        await delay(1200); 
+                        await delay(5600); 
                         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
                         console.log(
