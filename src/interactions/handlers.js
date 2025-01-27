@@ -552,7 +552,7 @@ export async function handlePublicChatSetup(bot, chatId, messageId) {
         };
 
         const timeoutId = setTimeout(async () => {
-            bot.removeListener('message', listener); // Удаляем обработчик при истечении времени
+            bot.removeListener('message', listener); 
             await bot.sendMessage(chatId, '❌ Время ожидания истекло. Попробуйте снова начать процесс добавления чата.');
         }, 10 * 60 * 1000);
 
