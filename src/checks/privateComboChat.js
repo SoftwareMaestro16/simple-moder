@@ -113,7 +113,7 @@ export async function startComboChatBalanceChecker(bot) {
         } catch (error) {
             console.error("Error during combo chat balance checking:", error.message);
         }
-    }, 30000);  
+    }, 60000);  
 }
 
 export async function handleMemberUpdatesCombo(bot) {
