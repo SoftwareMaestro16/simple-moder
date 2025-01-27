@@ -1,5 +1,5 @@
 import axios from "axios";
-import { delay } from "../defay";
+import { delay } from "../defay.js";
 
 export async function getNftBalance(walletAddress, collectionAddress) {
     const API_URL = `https://tonapi.io/v2/accounts/${walletAddress}/nfts?collection=${collectionAddress}&limit=1000&offset=0&indirect_ownership=false`;
