@@ -9,39 +9,33 @@ export async function handlePublicChats(bot) {
         const publicChats = await getAllPublicChats();
 
         const publicChatIds = publicChats.map(chat => String(chat.chatId));
+        console.log(`Загружено ${publicChatIds.length} публичных чатов.`);
 
         bot.on('message', async (msg) => {
             const chatId = String(msg.chat.id);
             const userId = msg.from.id;
-            const telegramChatType = msg.chat.type; 
-            
-            if (telegramChatType === 'private') {
-                return;
-            }
+            const telegramChatType = msg.chat.type;
+
+            if (telegramChatType === 'private') return;
 
             if (!publicChatIds.includes(chatId)) {
+                console.log(`Чат ${chatId} не найден в списке публичных чатов.`);
                 return;
             }
 
             const currentChat = publicChats.find(c => String(c.chatId) === chatId);
-
-            if (!currentChat || !currentChat.jetton) {
-                return;
-            }
+            if (!currentChat || !currentChat.jetton) return;
 
             const { jettonAddress, symbol, jettonRequirement } = currentChat.jetton;
-            if (!jettonAddress || !jettonRequirement) {
-                return;
-            }
+            if (!jettonAddress || !jettonRequirement) return;
 
             try {
                 const user = await getUserById(userId);
                 const walletAddress = user?.walletAddress;
 
                 if (!walletAddress) {
-                    await bot.deleteMessage(chatId, msg.message_id).catch(err => {
-                        console.error('Ошибка при удалении сообщения:', err.message);
-                    });
+                    console.log(`Пользователь ${userId} не подключил кошелек. Удаляю сообщение.`);
+                    await bot.deleteMessage(chatId, msg.message_id).catch(err => console.error('Ошибка при удалении сообщения:', err.message));
 
                     const warningMessage = `
 ⚠️ Чтобы писать в этом чате, вам необходимо подключить кошелек и иметь на балансе: <b>${jettonRequirement} $${symbol}</b>
@@ -61,9 +55,7 @@ export async function handlePublicChats(bot) {
                     });
 
                     setTimeout(() => {
-                        bot.deleteMessage(chatId, botMessage.message_id).catch(err => {
-                            console.error('Ошибка при удалении предупреждения:', err.message);
-                        });
+                        bot.deleteMessage(chatId, botMessage.message_id).catch(err => console.error('Ошибка при удалении предупреждения:', err.message));
                     }, 12000);
 
                     return;
@@ -73,9 +65,8 @@ export async function handlePublicChats(bot) {
                 const balance = await getJettonBalance(walletAddress, jettonAddress, decimals);
 
                 if (balance < jettonRequirement) {
-                    await bot.deleteMessage(chatId, msg.message_id).catch(err => {
-                        console.error('Ошибка при удалении сообщения:', err.message);
-                    });
+                    console.log(`Пользователь ${userId} не соответствует требованиям по балансу. Удаляю сообщение.`);
+                    await bot.deleteMessage(chatId, msg.message_id).catch(err => console.error('Ошибка при удалении сообщения:', err.message));
 
                     const warningMessage = `
 ⚠️ Чтобы писать в этом чате, вам необходимо иметь на балансе: <b>${jettonRequirement} $${symbol}</b> (у вас сейчас: ${balance})
@@ -95,9 +86,7 @@ export async function handlePublicChats(bot) {
                     });
 
                     setTimeout(() => {
-                        bot.deleteMessage(chatId, botMessage.message_id).catch(err => {
-                            console.error('Ошибка при удалении предупреждения:', err.message);
-                        });
+                        bot.deleteMessage(chatId, botMessage.message_id).catch(err => console.error('Ошибка при удалении предупреждения:', err.message));
                     }, 12000);
                 }
 

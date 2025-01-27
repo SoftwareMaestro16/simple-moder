@@ -118,7 +118,7 @@ export async function startJettonChatBalanceChecker(bot) {
         } catch (error) {
             console.error("Error during jetton balance checking:", error.message);
         }
-    }, 30000); 
+    }, 35000); 
 }
 
 export async function handleMemberUpdatesJetton(bot) {

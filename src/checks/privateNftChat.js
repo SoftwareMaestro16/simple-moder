@@ -116,7 +116,7 @@ export async function startNftChatBalanceChecker(bot) {
         } catch (error) {
             console.error("Error during NFT balance checking:", error.message);
         }
-    }, 30000); 
+    }, 35000); 
 }
 
 export async function handleNftMemberUpdatesNft(bot) {
