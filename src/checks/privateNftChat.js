@@ -15,7 +15,7 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
         }
 
         const walletAddress = user.walletAddress;
-        if (walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
+        if (!walletAddress || walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
             console.log(`Wallet address not found for user ID ${userId}.`);
             return;
         }
@@ -52,6 +52,7 @@ export async function startNftChatBalanceChecker(bot) {
     setInterval(async () => {
         try {
             const nftChats = await getAllPrivateNftChats(); 
+            console.log('nft');
 
             for (const chat of nftChats) {
                 const { chatId, nft } = chat;
@@ -75,7 +76,7 @@ export async function startNftChatBalanceChecker(bot) {
                         }
 
                         const walletAddress = user.walletAddress;
-                        if (walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
+                        if (!walletAddress || walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
                             console.log(`User ${userId} has no wallet address. Removing from members and kicking from chat ${chatId}.`);
                         
                             try {

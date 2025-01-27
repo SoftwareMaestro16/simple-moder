@@ -17,7 +17,7 @@ export async function comboPrivateChat({ chatId, msg, bot }) {
         }
 
         const walletAddress = user.walletAddress;
-        if (walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
+        if (!walletAddress || walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
             console.log(`Wallet address not found for user ID ${userId}.`);
             return;
         }
@@ -60,7 +60,8 @@ export async function startComboChatBalanceChecker(bot) {
     setInterval(async () => {
         try {
             const comboChats = await getAllComboChats(); 
-
+            console.log('combo');
+            
             for (const chat of comboChats) {
                 const { chatId, jetton, nft } = chat;
 
@@ -84,7 +85,7 @@ export async function startComboChatBalanceChecker(bot) {
                         }
 
                         const walletAddress = user.walletAddress;
-                        if (walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
+                        if (!walletAddress || walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
                             console.log(`User ${userId} has no wallet address. Removing from members and kicking from chat ${chatId}.`);
                             await bot.banChatMember(chatId, userId); 
                             await bot.unbanChatMember(chatId, userId);
@@ -113,7 +114,7 @@ export async function startComboChatBalanceChecker(bot) {
         } catch (error) {
             console.error("Error during combo chat balance checking:", error.message);
         }
-    }, 60000);  
+    }, 10000);  
 }
 
 export async function handleMemberUpdatesCombo(bot) {

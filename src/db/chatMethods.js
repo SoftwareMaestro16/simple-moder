@@ -195,7 +195,6 @@ export async function getAllPublicChats() {
 
 export async function getAllPrivateJettonChats() {
     try {
-        console.log('Запрос на получение всех приватных чатов с требованиями по жетонам...');
         const privateJettonChats = await Chat.find({
             type: 'private',
             'jetton.jettonAddress': { $exists: true, $ne: '' },
@@ -225,7 +224,6 @@ export async function getAllPrivateNftChats() {
 
 export async function getAllComboChats() {
     try {
-        console.log('Запрос на получение всех комбо-чатов...');
         const comboChats = await Chat.find({
             type: 'private',
             'jetton.jettonAddress': { $exists: true, $ne: '' },
