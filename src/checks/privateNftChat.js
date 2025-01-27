@@ -26,17 +26,20 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
             return;
         }
 
-        await delay(3600); 
         const { collectionAddress, nftRequirement } = chat.nft;
+        await delay(4100); 
         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, NFT Balance: ${userNftBalance.length} NFTs`);
 
         if (userNftBalance.length >= nftRequirement) {
-            await Chat.updateOne(
-                { chatId },
-                { $addToSet: { members: userId } } 
-            );
+            const alreadyInChat = chat.members.includes(userId);
+            if (!alreadyInChat) {
+                await Chat.updateOne(
+                    { chatId },
+                    { $addToSet: { members: userId } }
+                );
+            }
 
             try {
                 await bot.approveChatJoinRequest(chatId, userId);
@@ -47,15 +50,17 @@ export async function nftPrivateChat({ chatId, msg, bot }) {
                     
                     await bot.banChatMember(chatId, userId); 
                     await bot.unbanChatMember(chatId, userId); 
-                    
                     await bot.approveChatJoinRequest(chatId, userId);
                     console.log(`User ${userId} re-approved to join the chat ${chatId}.`);
                 } else {
                     console.error('Error handling join request:', error.message);
                 }
             }
-            await bot.sendMessage(chatId, `🎉 Welcome to the private NFT chat, ${msg.from.first_name || "User"}!`);
-            console.log(`User ${userId} added to NFT chat ${chatId}.`);
+
+            if (!alreadyInChat) {
+                await bot.sendMessage(chatId, `🎉 Добро пожаловать,  ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`);
+                console.log(`User ${userId} added to NFT chat ${chatId}.`);
+            }
         } else {
             console.log(`User ${userId} does not meet the NFT requirement for chat ${chatId}.`);
         }
@@ -95,24 +100,13 @@ export async function startNftChatBalanceChecker(bot) {
                         if (!walletAddress || walletAddress === null || walletAddress === 'Не подключен' || walletAddress === undefined) {
                             console.log(`User ${userId} has no wallet address. Removing from members and kicking from chat ${chatId}.`);
                         
-                            try {
-                                await bot.banChatMember(chatId, userId); 
-                                await bot.unbanChatMember(chatId, userId);
-                            } catch (error) {
-                                console.error(`Error kicking user ${userId} from chat ${chatId}:`, error.message);
-                            }
-                        
-                            try {
-                                await Chat.updateOne({ chatId }, { $pull: { members: userId } });
-                                console.log(`User ${userId} successfully removed from the database.`);
-                            } catch (error) {
-                                console.error(`Error updating database for user ${userId}:`, error.message);
-                            }
-                        
+                            await bot.banChatMember(chatId, userId); 
+                            await bot.unbanChatMember(chatId, userId);
+                            await Chat.updateOne({ chatId }, { $pull: { members: userId } });
                             continue;
                         }
 
-                        await delay(5600); 
+                        await delay(5200); 
                         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
                         console.log(

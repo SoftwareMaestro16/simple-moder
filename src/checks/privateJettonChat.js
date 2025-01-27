@@ -27,19 +27,22 @@ export async function jettonPrivateChat({ chatId, msg, bot }) {
             return;
         }
 
-        await delay(1750); 
+        await delay(4100); 
         const { jettonAddress, jettonRequirement, symbol } = chat.jetton;
         const jettonData = await getJettonData(jettonAddress);
-        await delay(3600); 
+        await delay(4100); 
         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, jettonData.decimals);
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, Balance: ${userJettonBalance} ${symbol}`);
 
         if (userJettonBalance >= jettonRequirement) {
-            await Chat.updateOne(
-                { chatId },
-                { $addToSet: { members: userId } } 
-            );
+            const alreadyInChat = chat.members.includes(userId);
+            if (!alreadyInChat) {
+                await Chat.updateOne(
+                    { chatId },
+                    { $addToSet: { members: userId } } 
+                );
+            }
 
             try {
                 await bot.approveChatJoinRequest(chatId, userId);
@@ -50,15 +53,17 @@ export async function jettonPrivateChat({ chatId, msg, bot }) {
                     
                     await bot.banChatMember(chatId, userId); 
                     await bot.unbanChatMember(chatId, userId); 
-                    
                     await bot.approveChatJoinRequest(chatId, userId);
                     console.log(`User ${userId} re-approved to join the chat ${chatId}.`);
                 } else {
                     console.error('Error handling join request:', error.message);
                 }
             }
-            await bot.sendMessage(chatId, `🎉 Welcome to the private Jetton chat, ${msg.from.first_name || "User"}!`);
-            console.log(`User ${userId} added to Jetton chat ${chatId}.`);
+
+            if (!alreadyInChat) {
+                await bot.sendMessage(chatId, `🎉 Добро пожаловать, ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`);
+                console.log(`User ${userId} added to Jetton chat ${chatId}.`);
+            }
         } else {
             console.log(`User ${userId} does not meet the jetton requirement for chat ${chatId}.`);
         }
@@ -115,7 +120,7 @@ export async function startJettonChatBalanceChecker(bot) {
                             continue; 
                         }
 
-                        await delay(5600); 
+                        await delay(5200); 
                         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, decimals);
 
                         console.log(

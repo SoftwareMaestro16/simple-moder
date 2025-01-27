@@ -34,9 +34,9 @@ export async function comboPrivateChat({ chatId, msg, bot }) {
         const jettonData = await getJettonData(jettonAddress);
         const { decimals } = jettonData;
 
-        await delay(3050); 
+        await delay(4050); 
         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, decimals);
-        await delay(3050); 
+        await delay(4050); 
         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, Jetton Balance: ${userJettonBalance} ${symbol}, NFT Balance: ${userNftBalance.length} NFTs`);
@@ -56,14 +56,14 @@ export async function comboPrivateChat({ chatId, msg, bot }) {
                     
                     await bot.banChatMember(chatId, userId); 
                     await bot.unbanChatMember(chatId, userId); 
-                    
                     await bot.approveChatJoinRequest(chatId, userId);
                     console.log(`User ${userId} re-approved to join the chat ${chatId}.`);
                 } else {
                     console.error('Error handling join request:', error.message);
                 }
             }            
-            await bot.sendMessage(chatId, `🎉 Welcome to the private Combo chat, ${msg.from.first_name || "User"}!`);
+            const welcomeMessage = `🎉 Добро пожаловать, ${msg.from.first_name || "Пользователь"}, в наш приватный чат!`;
+            await bot.sendMessage(chatId, welcomeMessage);
             console.log(`User ${userId} added to Combo chat ${chatId}.`);
         } else {
             console.log(`User ${userId} does not meet the requirements for the Combo chat ${chatId}.`);
@@ -110,9 +110,9 @@ export async function startComboChatBalanceChecker(bot) {
                             continue; 
                         }
 
-                        await delay(5600); 
+                        await delay(5200); 
                         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, decimals);
-                        await delay(5600); 
+                        await delay(5200); 
                         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
                         console.log(`Checking user ${userId} in combo chat ${chatId}: wallet = ${walletAddress}, Jetton Balance = ${userJettonBalance}, NFT Balance = ${userNftBalance.length}`);
