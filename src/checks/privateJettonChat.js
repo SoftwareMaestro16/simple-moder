@@ -27,10 +27,9 @@ export async function jettonPrivateChat({ chatId, msg, bot }) {
             return;
         }
 
-        await delay(4100); 
         const { jettonAddress, jettonRequirement, symbol } = chat.jetton;
         const jettonData = await getJettonData(jettonAddress);
-        await delay(4100); 
+
         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, jettonData.decimals);
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, Balance: ${userJettonBalance} ${symbol}`);
@@ -124,7 +123,6 @@ export async function startJettonChatBalanceChecker(bot) {
                             continue; 
                         }
 
-                        await delay(5200); 
                         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, decimals);
 
                         console.log(

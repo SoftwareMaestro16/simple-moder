@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export async function getJettonData(jettonAddress, retries = 5, delayTime = 5000) {
+export async function getJettonData(jettonAddress) {
     const API_URL = `https://tonapi.io/v2/jettons/${jettonAddress}`;
 
     try {
@@ -21,18 +21,11 @@ export async function getJettonData(jettonAddress, retries = 5, delayTime = 5000
                 throw new Error("Jetton not found");
             }
             if (error.response.status === 429) {
-                console.warn(`Rate limit exceeded: 429 error. Retrying in ${delayTime / 1000} seconds...`);
-
-                if (retries <= 0) {
-                    throw new Error('Rate limit exceeded. Max retries reached.');
-                }
-
-                await new Promise(resolve => setTimeout(resolve, delayTime));
-
-                return getJettonData(jettonAddress, retries - 1, delayTime * 2);
+                console.warn("Rate limit exceeded: 429 error. Retrying...");
+                await new Promise(resolve => setTimeout(resolve, 5000));
+                return getJettonData(jettonAddress);  
             }
         }
-
         console.error("Error fetching jetton data:", error.message);
         throw new Error("Failed to fetch jetton data");
     }

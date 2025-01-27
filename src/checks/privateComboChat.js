@@ -34,9 +34,7 @@ export async function comboPrivateChat({ chatId, msg, bot }) {
         const jettonData = await getJettonData(jettonAddress);
         const { decimals } = jettonData;
 
-        await delay(4050); 
         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, decimals);
-        await delay(4050); 
         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
         console.log(`User ID: ${userId}, Wallet: ${walletAddress}, Jetton Balance: ${userJettonBalance} ${symbol}, NFT Balance: ${userNftBalance.length} NFTs`);
@@ -116,9 +114,7 @@ export async function startComboChatBalanceChecker(bot) {
                             continue; 
                         }
 
-                        await delay(5200); 
                         const userJettonBalance = await getJettonBalance(walletAddress, jettonAddress, decimals);
-                        await delay(5200); 
                         const userNftBalance = await getNftBalance(walletAddress, collectionAddress);
 
                         console.log(`Checking user ${userId} in combo chat ${chatId}: wallet = ${walletAddress}, Jetton Balance = ${userJettonBalance}, NFT Balance = ${userNftBalance.length}`);

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export async function getCollectionData(collectionAddress, retries = 5, delayTime = 5000) {
+export async function getCollectionData(collectionAddress) {
     const API_URL = `https://tonapi.io/v2/nfts/collections/${collectionAddress}`;
 
     try {
@@ -21,19 +21,11 @@ export async function getCollectionData(collectionAddress, retries = 5, delayTim
                 throw new Error("Collection not found");
             }
             if (error.response.status === 429) {
-                console.warn(`Rate limit exceeded: 429 error. Retrying in ${delayTime / 1000} seconds...`);
-                
-                if (retries <= 0) {
-                    console.error('Rate limit exceeded. Max retries reached.');
-                    throw new Error('Max retries reached due to rate limit');
-                }
-
-                await new Promise(resolve => setTimeout(resolve, delayTime));
-
-                return getCollectionData(collectionAddress, retries - 1, delayTime * 2);
+                console.warn("Rate limit exceeded: 429 error. Retrying...");
+                await new Promise(resolve => setTimeout(resolve, 5000)); 
+                return getCollectionData(collectionAddress);  
             }
         }
-
         console.error(`Ошибка при получении данных коллекции: ${error.message}`);
         throw new Error('Не удалось получить данные коллекции. Проверьте адрес.');
     }
